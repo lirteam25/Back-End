@@ -1,0 +1,29 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "backend ",
+  "main": "app.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "16.3.1",
+    "express": "^4.18.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "firebase-admin": "11.11.0",
+    "helmet": "7.0.0",
+    "hpp": "^0.2.3",
+    "mongodb": "6.2.0",
+    "mongodb-connection-string-url": "^2.6.0",
+    "mongoose": "8.0.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "6.9.7",
+    "react-icons": "^4.11.0",
+    "validator": "13.11.0",
+    "xss-clean": "0.1.4"
+  },
+  "scripts": {
+    "dev": "node server.js",
+    "start": "nodemon server.js"
+  },
+  "author": "Lir",
+  "license": "ISC"
+}
