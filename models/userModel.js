@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema({
         type: String
     },
 
+    artist_first_sale_fee: {
+        type: Number
+    },
+
     active: {
         type: Boolean,
         default: true,
