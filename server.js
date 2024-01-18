@@ -6,7 +6,7 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 
 const DB = process.env.NODE_ENV === "production"
-    ? process.env.DATABASE_PROD.replace("<PASSWORD>", process.env.DATABASE_PROD_PASSWORD)
+    ? process.env.DATABASE.replace("<PASSWORD>", process.env.DATABASE_PASSWORD)
     : process.env.DATABASE_DEV.replace("<PASSWORD>", process.env.DATABASE_DEV_PASSWORD);
 
 mongoose.connect(DB).then(() => {
