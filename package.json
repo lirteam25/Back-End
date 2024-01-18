@@ -21,8 +21,9 @@
     "xss-clean": "0.1.4"
   },
   "scripts": {
-    "dev": "node server.js",
-    "start": "nodemon server.js"
+    "dev": "NODE_ENV=development node server.js",
+    "start": "nodemon server.js",
+    "prod": "NODE_ENV=production node server.js"
   },
   "author": "Lir",
   "license": "ISC"

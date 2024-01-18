@@ -1,7 +1,6 @@
 //in app.js we want to run the function that are always required
 const express = require("express");
 const morgan = require("morgan");
-//const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
@@ -81,19 +80,19 @@ app.use((req, res, next) => {
 const admin = require('firebase-admin');
 
 // import service account file (helps to know the firebase project details)
-const { privateKey } = JSON.parse(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
+const { privateKey } = JSON.parse(process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_PRIVATE_KEY : process.env.FIREBASE_ADMIN_PRIVATE_KEY_DEV);
 
 const serviceAccount = {
-    "type": process.env.FIREBASE_ADMIN_TYPE,
-    "project_id": process.env.FIREBASE_ADMIN_PROJECT_ID,
-    "private_key_id": process.env.FIREBASE_ADMIN_PRIVATE_KEY_ID,
+    "type": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_TYPE : process.env.FIREBASE_ADMIN_TYPE_DEV,
+    "project_id": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_PROJECT_ID : process.env.FIREBASE_ADMIN_PROJECT_ID_DEV,
+    "private_key_id": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_PRIVATE_KEY_ID : process.env.FIREBASE_ADMIN_PRIVATE_KEY_ID_DEV,
     "private_key": privateKey,
-    "client_email": process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-    "client_id": process.env.FIREBASE_ADMIN_CLIENT_ID,
-    "auth_uri": process.env.FIREBASE_ADMIN_AUTH_URI,
-    "token_uri": process.env.FIREBASE_ADMIN_TOKEN_URI,
-    "auth_provider_x509_cert_url": process.env.FIREBASE_ADMIN_AUTH_PROVIDER_X509_CERT_URL,
-    "client_x509_cert_url": process.env.FIREBASE_ADMIN_CLIENT_X509_CERT_URL
+    "client_email": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_CLIENT_EMAIL : process.env.FIREBASE_ADMIN_CLIENT_EMAIL_DEV,
+    "client_id": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_CLIENT_ID : process.env.FIREBASE_ADMIN_CLIENT_ID_DEV,
+    "auth_uri": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_AUTH_URI : process.env.FIREBASE_ADMIN_AUTH_URI_DEV,
+    "token_uri": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_TOKEN_URI : process.env.FIREBASE_ADMIN_TOKEN_URI,
+    "auth_provider_x509_cert_url": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_AUTH_PROVIDER_X509_CERT_URL : process.env.FIREBASE_ADMIN_AUTH_PROVIDER_X509_CERT_URL_DEV,
+    "client_x509_cert_url": process.env.NODE_ENV == "production" ? process.env.FIREBASE_ADMIN_CLIENT_X509_CERT_URL : process.env.FIREBASE_ADMIN_CLIENT_X509_CERT_URL_DEV
 }
 
 // Intialize the firebase-admin project/account
