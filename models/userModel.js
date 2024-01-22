@@ -19,6 +19,11 @@ const userSchema = new mongoose.Schema({
         sparse: true,
     },
 
+    picture: {
+        type: Number,
+        default: Math.floor(Math.random() * 4) + 1
+    },
+
     artist_minting_contract: {
         type: String,
     },
