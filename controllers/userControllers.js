@@ -166,7 +166,6 @@ exports.fetchArtistName = catchAsync(async (req, res) => {
 });
 
 exports.getTopCollectors = catchAsync(async (req, res) => {
-    const excludedOwners = ["0x2d90fc78ad933717bc4a31097fd845c478f9b204"];
 
     const top10Owners = await Owner.aggregate([
         {
