@@ -21,7 +21,9 @@ const userSchema = new mongoose.Schema({
 
     picture: {
         type: Number,
-        default: Math.floor(Math.random() * 4) + 1
+        default: function () {
+            return Math.floor(Math.random() * 7) + 1;
+        }
     },
 
     artist_minting_contract: {
