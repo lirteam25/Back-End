@@ -1,6 +1,4 @@
 const { MongoClient } = require('mongodb');
-const dotenv = require("dotenv");
-dotenv.config({ path: "./config.env" });
 
 const string = "mongodb+srv://Pelepo:<PASSWORD>@cluster0.23iasfb.mongodb.net/?retryWrites=true&w=majority";
 const password = "XPpqUd2DQDp5c5g";
