@@ -58,6 +58,10 @@ const userSchema = new mongoose.Schema({
         type: Number
     },
 
+    artist_soundcloud_subscription: {
+        type: Number
+    },
+
     active: {
         type: Boolean,
         default: true,

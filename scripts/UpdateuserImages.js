@@ -1,4 +1,6 @@
 const { MongoClient } = require('mongodb');
+const dotenv = require("dotenv");
+dotenv.config({ path: "./config.env" });
 
 const string = "mongodb+srv://Pelepo:<PASSWORD>@cluster0.23iasfb.mongodb.net/?retryWrites=true&w=majority";
 const password = "XPpqUd2DQDp5c5g";
@@ -21,7 +23,7 @@ async function runScript() {
 
         const AllUsersCursor = await collection.find({ role: { $in: ["user", "artist", "admin"] } });
         const AllUsersArray = await AllUsersCursor.toArray();
-        console.log(AllUsersArray);
+
         for (const element of AllUsersArray) {
             const randomPictureNumber = Math.floor(Math.random() * 7) + 1;
             await collection.updateOne({ "_id": element._id }, { $set: { "picture": randomPictureNumber } });
