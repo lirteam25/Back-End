@@ -137,9 +137,8 @@ const SnapshotSchema = new mongoose.Schema({
     transactionsToValue: {
         type: Number,
     }
-
 });
 
-const Snapshot = mongoose.model("Email", SnapshotSchema);
+const Snapshot = mongoose.model("Snapshot", SnapshotSchema);
 
 module.exports = Snapshot;
