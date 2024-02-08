@@ -36,11 +36,6 @@ const TokenInfoSchema = new mongoose.Schema({
         required: [true, "Provide name of the song"],
     },
 
-    version: {
-        type: String,
-        required: [true, "Provide name of the song"],
-    },
-
     artist: {
         type: String,
         required: [true, "Provide the name of the artist"]

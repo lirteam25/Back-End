@@ -9,6 +9,7 @@
     "express": "^4.18.2",
     "express-mongo-sanitize": "^2.2.0",
     "firebase-admin": "11.11.0",
+    "googleapis": "^131.0.0",
     "helmet": "7.0.0",
     "hpp": "^0.2.3",
     "mongodb": "6.2.0",
@@ -16,14 +17,18 @@
     "mongoose": "8.0.0",
     "morgan": "^1.10.0",
     "nodemailer": "6.9.7",
+    "pdfkit": "^0.14.0",
     "react-icons": "^4.11.0",
     "validator": "13.11.0",
+    "voilab-pdf-table": "^0.5.1",
     "xss-clean": "0.1.4"
   },
   "scripts": {
     "dev": "NODE_ENV=development node server.js",
     "start": "nodemon server.js",
-    "prod": "NODE_ENV=production node server.js"
+    "prod": "NODE_ENV=production node server.js",
+    "generate-report": "node scripts/ReportGeneration/ReportGeneration.js",
+    "trigger": "node scripts/ReportGeneration/TriggerFunction.js"
   },
   "author": "Lir",
   "license": "ISC"

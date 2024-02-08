@@ -21,7 +21,7 @@ async function runScript() {
 
         const AllUsersCursor = await collection.find({ role: { $in: ["user", "artist", "admin"] } });
         const AllUsersArray = await AllUsersCursor.toArray();
-        console.log(AllUsersArray);
+
         for (const element of AllUsersArray) {
             const randomPictureNumber = Math.floor(Math.random() * 7) + 1;
             await collection.updateOne({ "_id": element._id }, { $set: { "picture": randomPictureNumber } });

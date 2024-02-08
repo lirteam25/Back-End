@@ -21,7 +21,7 @@ exports.createNFTOwner = catchAsync(async (req, res, next) => {
         .catch(function (error) {
             return next(new AppError(error, 401));
         });
-    await sendEmail(userEmail, "LIR - Your Tokens Have Been Created",
+    await sendEmail(userEmail, "LIR MUSIC - Your Tokens Have Been Created",
         `<html lang="en">
         <head>
             <meta charset="UTF-8">
@@ -45,29 +45,30 @@ exports.createNFTOwner = catchAsync(async (req, res, next) => {
         <div style="text-align:center; font-size: 18px; font-family: 'Space Grotesk', sans-serif">your tokens have been created</div> 
         </div>
                 <div style="background-color:rgb(27,27,27); padding: 10px 30px; border: 1px solid rgb(48, 48, 48); margin: 40px 0; font-size: 18px;">
-                  <p style="margin: 20px 0;">Hello artist,</p>
+                  <p style="margin: 20px 0;">Dear ${user.artist_name},</p>
                   <p style="margin: 20px 0">Congratulations on creating ${req.body.amount} tokens representing your exclusive music contents! We're excited to inform you that ${req.body.sellingQuantity} tokens are available for purchase on our platform at the price of ${req.body.price}$.</p>
                   <p style="margin: 20px 0">Your music has the power to captivate and inspire, and by creating tokens, you're providing a unique opportunity for your fans and supporters to engage with your creative journey. With your tokens, fans can now own a piece of your music in a whole new way, enabling them to participate in the success and growth of your artistic endeavors. We encourage you to share the news with your fans and promote the availability of your tokens. This will help generate interest and create a buzz around your music.</p>
-        
+                  <p>You can always listen to your collected tracks in our mobile application, currently only available on the
+                  <a style="color: rgb(214, 11, 82); text-decoration: none;" href='https://play.google.com/store/search?q=LIR%20MUSIC&c=apps&hl=it&gl=US&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>Google Play Store</a>. </p>
                   <p style="margin: 20px 0">If you have any questions or need assistance in managing your tokens or promoting them to your audience, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
                   <p style="margin: 20px 0">Once again, congratulations on taking this exciting step in your music career!</p>
                   <p style="margin: 20px 0">Best regards,</p>
                   <p style="margin: 20px 0">The LIR Music Team</p>
                 </div>
-        <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr ; align-items: top; margin-bottom: 40px">
-        <img src="https://res.cloudinary.com/dihlirr2b/image/upload/v1697982005/Utils/wikqgtsta7zacj8lrqtq.png" alt="LIR Logo" style="width: 80px; display: block;">
-        <div style="font-size: 16px; font-family: 'Space Grotesk', sans-serif ">
-        ©2023 LIR, all rights reserved <br/>
-        <a href="https://www.lirmusic.com" style="color: white; text-decoration: none">lirmusic.com</a>
-        
-        </div>
-        <div style="display: flex; gap: 20px; justify-content: flex-end">
-                        <a href="https://www.instagram.com/lirmusicofficial" style="color: white"> <i class="fab fa-instagram" style="font-size:23px"></i> </a>
-                        <i class="fab fa-discord" style="font-size:23px"></i>
-                        <a href="https://www.youtube.com/@lirmusicofficial" style="color: white"> <i class="fab fa-youtube" style="font-size:23px"></i> </a>
-                    </div>
-        
-              </div>
+                <div style="display: grid; grid-template-columns: 0.2fr 0.1fr 1fr 1fr ; align-items: top; margin-bottom: 40px">
+                <svg id="Livello_1" data-name="Livello 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850.39 340.16"><defs><style>.cls-1{fill:#fff;}</style></defs><path class="cls-1" d="M237.27-74.54V95.54H208.92V-74.54ZM38.85,67.19V-74.54H10.5V95.54H180.58V67.19Zm315-56.69,49.09,85H435.7l-49.1-85Zm-88.25-85v28.35H407.35V10.5H435.7v-85Zm-422,0,49.1,85-49.1,85h32.73l49.1-85-49.1-85Zm-258.33-85v85h28.35v-56.69h283.46v56.69h28.35v-85Zm49.1,85-49.1,85,49.1,85h32.73L-382,10.5l49.09-85Zm262.71,226.77H-386.35V95.54H-414.7v85H-74.54v-85h-28.35Z" transform="translate(414.7 159.58)"/ style="width: 80px; display: block;"></svg>
+                        <div style="font-size: 16px; font-family: 'Space Grotesk', sans-serif; grid-column: 3">
+                        ©2023 LIR, all rights reserved <br/>
+                        <a href="https://www.lirmusic.com" style="color: white; text-decoration: none">lirmusic.com</a>
+                        
+                        </div>
+                        <div style="display: flex; gap: 20px; justify-content: flex-end">
+                                        <a href="https://www.instagram.com/lirmusicofficial" style="color: white"> <i class="fab fa-instagram" style="font-size:23px"></i> </a>
+                                        <i class="fab fa-discord" style="font-size:23px"></i>
+                                        <a href="https://www.youtube.com/@lirmusicofficial" style="color: white"> <i class="fab fa-youtube" style="font-size:23px"></i> </a>
+                                    </div>
+                        
+                              </div>
               </html>`);
 
     res.status(201).json({
@@ -122,7 +123,7 @@ exports.nftSold = catchAsync(async (req, res, next) => {
     if (!seller) {
         return next(new AppError(`No seller found with ${req.body.owner_of} address`, 400))
     };
-    const price = seller.price
+    const price = seller.price;
 
     //Send Email
     const UserSeller = await User.findOne({ "wallet": req.body.owner_of });
@@ -134,7 +135,7 @@ exports.nftSold = catchAsync(async (req, res, next) => {
         .catch(function (error) {
             return next(new AppError(error, 401));
         });
-    await sendEmail(sellerEmail, "LIR - Your Token Has Been Sold",
+    await sendEmail(sellerEmail, "LIR MUSIC - Your Track Has Been Sold",
         `<html lang="en">
         <head>
             <meta charset="UTF-8">
@@ -155,31 +156,30 @@ exports.nftSold = catchAsync(async (req, res, next) => {
         <div style="color:white; background-color:rgb(17,17,17); font-family:sans-serif; padding: 50px 10%; overflow: auto">
                 <div style="margin: 50px 0">
         <h1 style="color:rgb(214, 11, 82); text-align:center; text-transform:uppercase; margin: 0;">Congratulations</h1>
-        <div style="text-align:center; font-size: 18px; font-family: 'Space Grotesk', sans-serif">your token has been bought</div> 
+        <div style="text-align:center; font-size: 18px; font-family: 'Space Grotesk', sans-serif">your track has been bought</div> 
         </div>
                 <div style="background-color:rgb(27,27,27); padding: 10px 30px; border: 1px solid rgb(48, 48, 48); margin: 40px 0; font-size: 18px;">
-                  <p style="margin: 20px 0;">Hello seller,</p>
-                  <p style="margin: 20px 0">We are delighted to inform you that your token has been sold on our platform. The purchase price for your token was ${price}$. <br/>For more details about this transaction, please visit <a href="https://www.lirmusic.com" style="color: rgb(214, 11, 82); text-decoration: none;">our website</a>.</p>
-        
-                  <p style="margin: 20px 0">If you have any questions or need assistance in managing your tokens, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
+                  <p style="margin: 20px 0;">Dear,</p>
+                  <p style="margin: 20px 0">We are delighted to inform you that your track has been sold on our platform. The purchase price for your track was ${price}$. <br/>For more details about this transaction, please visit <a href="https://www.lirmusic.com" style="color: rgb(214, 11, 82); text-decoration: none;">lirmusic.com</a>.</p>
+                  <p style="margin: 20px 0">If you have any questions or need assistance in managing your tracks, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
                   <p style="margin: 20px 0">Once again, congratulations for the sale!</p>
                   <p style="margin: 20px 0">Best regards,</p>
                   <p style="margin: 20px 0">The LIR Music Team</p>
                 </div>
-        <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr ; align-items: top; margin-bottom: 40px">
-        <img src="https://res.cloudinary.com/dihlirr2b/image/upload/v1697982005/Utils/wikqgtsta7zacj8lrqtq.png" alt="LIR Logo" style="width: 80px; display: block;">
-        <div style="font-size: 16px; font-family: 'Space Grotesk', sans-serif ">
-        ©2023 LIR, all rights reserved <br/>
-        <a href="https://www.lirmusic.com" style="color: white; text-decoration: none">lirmusic.com</a>
-        
-        </div>
-        <div style="display: flex; gap: 20px; justify-content: flex-end">
-                        <a href="https://www.instagram.com/lirmusicofficial" style="color: white"> <i class="fab fa-instagram" style="font-size:23px"></i> </a>
-                        <i class="fab fa-discord" style="font-size:23px"></i>
-                        <a href="https://www.youtube.com/@lirmusicofficial" style="color: white"> <i class="fab fa-youtube" style="font-size:23px"></i> </a>
-                    </div>
-        
-              </div>
+                <div style="display: grid; grid-template-columns: 0.2fr 0.1fr 1fr 1fr ; align-items: top; margin-bottom: 40px">
+                <svg id="Livello_1" data-name="Livello 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850.39 340.16"><defs><style>.cls-1{fill:#fff;}</style></defs><path class="cls-1" d="M237.27-74.54V95.54H208.92V-74.54ZM38.85,67.19V-74.54H10.5V95.54H180.58V67.19Zm315-56.69,49.09,85H435.7l-49.1-85Zm-88.25-85v28.35H407.35V10.5H435.7v-85Zm-422,0,49.1,85-49.1,85h32.73l49.1-85-49.1-85Zm-258.33-85v85h28.35v-56.69h283.46v56.69h28.35v-85Zm49.1,85-49.1,85,49.1,85h32.73L-382,10.5l49.09-85Zm262.71,226.77H-386.35V95.54H-414.7v85H-74.54v-85h-28.35Z" transform="translate(414.7 159.58)"/ style="width: 80px; display: block;"></svg>
+                        <div style="font-size: 16px; font-family: 'Space Grotesk', sans-serif; grid-column: 3">
+                        ©2023 LIR, all rights reserved <br/>
+                        <a href="https://www.lirmusic.com" style="color: white; text-decoration: none">lirmusic.com</a>
+                        
+                        </div>
+                        <div style="display: flex; gap: 20px; justify-content: flex-end">
+                                        <a href="https://www.instagram.com/lirmusicofficial" style="color: white"> <i class="fab fa-instagram" style="font-size:23px"></i> </a>
+                                        <i class="fab fa-discord" style="font-size:23px"></i>
+                                        <a href="https://www.youtube.com/@lirmusicofficial" style="color: white"> <i class="fab fa-youtube" style="font-size:23px"></i> </a>
+                                    </div>
+                        
+                              </div>
               </html>`
     );
     //Update newOwner
@@ -205,7 +205,7 @@ exports.nftSold = catchAsync(async (req, res, next) => {
         .catch(function (error) {
             return next(new AppError(error, 401));
         });
-    await sendEmail(buyerEmail, "LIR - Token Purchase Confirmation",
+    await sendEmail(buyerEmail, "LIR MUSIC - Track Purchase Confirmation",
         `<html lang="en">
         <head>
             <meta charset="UTF-8">
@@ -226,31 +226,37 @@ exports.nftSold = catchAsync(async (req, res, next) => {
         <div style="color:white; background-color:rgb(17,17,17); font-family:sans-serif; padding: 50px 10%; overflow: auto">
                 <div style="margin: 50px 0">
         <h1 style="color:rgb(214, 11, 82); text-align:center; text-transform:uppercase; margin: 0;">Congratulations</h1>
-        <div style="text-align:center; font-size: 18px; font-family: 'Space Grotesk', sans-serif">your token purchase was successful</div> 
+        <div style="text-align:center; font-size: 18px; font-family: 'Space Grotesk', sans-serif">your track purchase was successful</div> 
         </div>
                 <div style="background-color:rgb(27,27,27); padding: 10px 30px; border: 1px solid rgb(48, 48, 48); margin: 40px 0; font-size: 18px;">
-                  <p style="margin: 20px 0;">Hello buyer,</p>
-                  <p style="margin: 20px 0">We are pleased to confirm your successful purchase of a token on our platform. For more details about this transaction, please visit <a href="https://www.lirmusic.com" style="color: rgb(214, 11, 82); text-decoration: none;">our website</a>.</p>
-        
-                  <p style="margin: 20px 0">If you have any questions or need assistance in managing your tokens, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
+                  <p style="margin: 20px 0;">Dear,</p>
+                  <p style="margin: 20px 0">
+                  We are pleased to confirm that you have successfully collected a track on our platform. 
+                  Consider it a little treasure, as you are one of the exclusive holders of this track. 
+                  For more details about this transaction, please visit
+                  <a href="https://www.lirmusic.com" style="color: rgb(214, 11, 82); text-decoration: none;">lirmusic.com</a>.
+                  </p>
+                  <p>You can always listen to your collected tracks in our mobile application, currently only available for
+                  <a style="color: rgb(214, 11, 82); text-decoration: none;" href='https://play.google.com/store/search?q=LIR%20MUSIC&c=apps&hl=it&gl=US&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>Android</a>. </p>
+                  <p style="margin: 20px 0">If you have any questions or need assistance in managing your collected tracks, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
                   <p style="margin: 20px 0">Once again, congratulations for the purchase!</p>
                   <p style="margin: 20px 0">Best regards,</p>
                   <p style="margin: 20px 0">The LIR Music Team</p>
                 </div>
-        <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr ; align-items: top; margin-bottom: 40px">
-        <img src="https://res.cloudinary.com/dihlirr2b/image/upload/v1697982005/Utils/wikqgtsta7zacj8lrqtq.png" alt="LIR Logo" style="width: 80px; display: block;">
-        <div style="font-size: 16px; font-family: 'Space Grotesk', sans-serif ">
-        ©2023 LIR, all rights reserved <br/>
-        <a href="https://www.lirmusic.com" style="color: white; text-decoration: none">lirmusic.com</a>
-        
-        </div>
-        <div style="display: flex; gap: 20px; justify-content: flex-end">
-                        <a href="https://www.instagram.com/lirmusicofficial" style="color: white"> <i class="fab fa-instagram" style="font-size:23px"></i> </a>
-                        <i class="fab fa-discord" style="font-size:23px"></i>
-                        <a href="https://www.youtube.com/@lirmusicofficial" style="color: white"> <i class="fab fa-youtube" style="font-size:23px"></i> </a>
-                    </div>
-        
-              </div>
+                <div style="display: grid; grid-template-columns: 0.2fr 0.1fr 1fr 1fr ; align-items: top; margin-bottom: 40px">
+                <svg id="Livello_1" data-name="Livello 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850.39 340.16"><defs><style>.cls-1{fill:#fff;}</style></defs><path class="cls-1" d="M237.27-74.54V95.54H208.92V-74.54ZM38.85,67.19V-74.54H10.5V95.54H180.58V67.19Zm315-56.69,49.09,85H435.7l-49.1-85Zm-88.25-85v28.35H407.35V10.5H435.7v-85Zm-422,0,49.1,85-49.1,85h32.73l49.1-85-49.1-85Zm-258.33-85v85h28.35v-56.69h283.46v56.69h28.35v-85Zm49.1,85-49.1,85,49.1,85h32.73L-382,10.5l49.09-85Zm262.71,226.77H-386.35V95.54H-414.7v85H-74.54v-85h-28.35Z" transform="translate(414.7 159.58)"/ style="width: 80px; display: block;"></svg>
+                        <div style="font-size: 16px; font-family: 'Space Grotesk', sans-serif; grid-column: 3">
+                        ©2023 LIR, all rights reserved <br/>
+                        <a href="https://www.lirmusic.com" style="color: white; text-decoration: none">lirmusic.com</a>
+                        
+                        </div>
+                        <div style="display: flex; gap: 20px; justify-content: flex-end">
+                                        <a href="https://www.instagram.com/lirmusicofficial" style="color: white"> <i class="fab fa-instagram" style="font-size:23px"></i> </a>
+                                        <i class="fab fa-discord" style="font-size:23px"></i>
+                                        <a href="https://www.youtube.com/@lirmusicofficial" style="color: white"> <i class="fab fa-youtube" style="font-size:23px"></i> </a>
+                                    </div>
+                        
+                              </div>
               </html>`
     );
 
