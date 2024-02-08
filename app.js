@@ -16,6 +16,7 @@ const usersRouter = require("./routes/usersRoute");
 const tokenTransactionRouter = require("./routes/tokenTransactionRoute");
 const artistFormRouter = require("./routes/artistFormRoute");
 const userListeningActivityRouter = require("./routes/userListeningActivityRoute");
+const snapshotRouter = require("./routes/snapshotRoute");
 
 const globalErrorHandler = require("./controllers/errorController");
 
@@ -105,7 +106,8 @@ app.use("/api/v1/owners", tokenOwnersRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/transactions", tokenTransactionRouter);
 app.use("/api/v1/artistForm", artistFormRouter);
-app.use("/api/v1/userListeningActivity", userListeningActivityRouter)
+app.use("/api/v1/userListeningActivity", userListeningActivityRouter);
+app.use("/api/v1/report", snapshotRouter);
 
 
 //middleware for error handling. All: triggers for all the erorrs. 
