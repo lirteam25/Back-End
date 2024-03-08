@@ -19,6 +19,8 @@ router.route("/artistName").get(userControllers.fetchArtistName);
 
 router.route("/top10Collectors").get(userControllers.getTopCollectors);
 
+router.route("/supporters/:id").get(userControllers.getSupporters);
+
 router.route("/:id").get(authController.verifyTokenFirebase, authController.restricTo("admin"), userControllers.getSingleUser);
 
 

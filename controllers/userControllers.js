@@ -236,3 +236,80 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
         topCollectors: enrichedTop10Owners
     });
 })
+
+
+exports.getSupporters = catchAsync(async (req, res) => {
+    const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
+    const Seller = await Owner.findById(req.params.id);
+
+    const collectors = await Owner.aggregate([
+        {
+            $match: {
+                _id: { $nin: excludedOwners },
+                'token_id': Seller.token_id,
+                'token_address': Seller.token_address
+            }
+        },
+        {
+            $group: {
+                _id: '$owner_of',
+                count: { $sum: '$amount' }, // Use 'count' as the field name
+            },
+        },
+        {
+            $sort: { count: -1 } // Sort by count in descending order
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: '_id',
+                foreignField: 'wallet',
+                as: 'userDetails'
+            }
+        },
+        {
+            $unwind: '$userDetails'
+        },
+        {
+            $project: {
+                _id: 0,
+                owner_of: '$_id',
+                uid: '$userDetails.uid',
+                count: 1,
+                picture: '$userDetails.picture'
+            }
+        }
+    ]);
+
+    console.log(collectors);
+
+
+    const uids = collectors.map(owner => owner.uid);
+
+    const displayNames = {};
+    await Promise.all(
+        uids.map(async uid => {
+            try {
+                const userRecord = await admin.auth().getUser(uid);
+                displayNames[uid] = userRecord.displayName || 'No display name'; // Setting displayName or default message
+            } catch (error) {
+                console.error('Error fetching user:', error);
+                displayNames[uid] = 'No display name'; // Set a default message in case of an error
+            }
+        })
+    );
+
+    // Combining displayNames with top10Owners
+    const enrichedTop10Owners = collectors.map(owner => ({
+        owner_of: owner.owner_of,
+        uid: owner.uid,
+        count: owner.count,
+        displayName: displayNames[owner.uid],
+        picture: owner.picture,
+    }));
+
+    res.status(200).json({
+        status: "success",
+        supporters: enrichedTop10Owners
+    });
+})
