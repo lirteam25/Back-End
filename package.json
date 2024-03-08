@@ -24,7 +24,7 @@
     "xss-clean": "0.1.4"
   },
   "scripts": {
-    "dev": "NODE_ENV=development nodemon server.js",
+    "dev": "NODE_ENV=development node server.js",
     "start": "nodemon server.js",
     "prod": "NODE_ENV=production node server.js",
     "trigger": "node scripts/ReportGeneration/TriggerFunction.js"
