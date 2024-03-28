@@ -53,6 +53,11 @@ const TokenInfoSchema = new mongoose.Schema({
         select: false,
     },
 
+    musicTag: {
+        type: Array,
+        required: [true, "Provide the music tag"]
+    },
+
     imageSongPinata: {
         type: String,
         required: [true, "Provide the imageSong"]
