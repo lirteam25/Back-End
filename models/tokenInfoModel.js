@@ -31,6 +31,11 @@ const TokenInfoSchema = new mongoose.Schema({
         required: [true, "Provide supply"]
     },
 
+    remaining_for_minting: {
+        type: Number,
+        required: [true, "Provide the number of token reimaing for minting"]
+    },
+
     song: {
         type: String,
         required: [true, "Provide name of the song"],
@@ -55,7 +60,6 @@ const TokenInfoSchema = new mongoose.Schema({
 
     musicTag: {
         type: Array,
-        required: [true, "Provide the music tag"]
     },
 
     imageSongPinata: {
@@ -87,6 +91,7 @@ const TokenInfoSchema = new mongoose.Schema({
 
     audioDuration: {
         type: String,
+        required: [true, "Provide the audio duration"],
     },
 
     token_URI: {

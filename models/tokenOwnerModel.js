@@ -39,6 +39,10 @@ const nftOwnersSchema = new mongoose.Schema({
         default: 0,
     },
 
+    listing_id: {
+        type: Number,
+    },
+
     price: {
         type: Number,
     },
