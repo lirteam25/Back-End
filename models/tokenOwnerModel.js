@@ -34,6 +34,11 @@ const nftOwnersSchema = new mongoose.Schema({
         default: true,
     },
 
+    isFirstSale: {
+        type: Boolean,
+        default: false,
+    },
+
     sellingQuantity: {
         type: Number,
         default: 0,
