@@ -118,11 +118,19 @@ exports.nftSold = catchAsync(async (req, res, next) => {
         return next(new AppError("No User found with that Firebase Token", 400))
     }
     //Update Seller 
-    const seller = await TokenOwner.findOneAndUpdate({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of },
-        { $inc: { sellingQuantity: -1, amount: -1 } });
-    if (!seller) {
+    const checkamount = await TokenOwner.find({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of });
+    if (!checkamount) {
         return next(new AppError(`No seller found with ${req.body.owner_of} address`, 400))
     };
+    let seller
+    if (checkamount.amount <= 0) {
+        seller = await TokenOwner.findOneAndUpdate({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of },
+            { $inc: { sellingQuantity: -1 } });
+    } else {
+        seller = await TokenOwner.findOneAndUpdate({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of },
+            { $inc: { sellingQuantity: -1, amount: -1 } });
+    }
+
     const price = seller.price;
 
     //Send Email
