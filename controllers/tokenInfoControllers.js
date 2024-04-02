@@ -156,6 +156,8 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
         "amount": NFTOwned.amount,
         "sellingQuantity": NFTOwned.sellingQuantity,
         "price": NFTOwned.price,
+        "isFirstSale": NFTOwned.isFirstSale ? NFTOwned.isFirstSale : false,
+        "listing_id": NFTOwned.listing_id,
         "totalListed": totalListedQuantity // Add the totalListed parameter
     };
 
