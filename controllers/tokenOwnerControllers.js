@@ -122,8 +122,8 @@ exports.nftSold = catchAsync(async (req, res, next) => {
     if (!checkamount) {
         return next(new AppError(`No seller found with ${req.body.owner_of} address`, 400))
     };
-    let seller
-    if (checkamount.amount <= 0) {
+    let seller;
+    if (checkamount[0].amount <= 0) {
         seller = await TokenOwner.findOneAndUpdate({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of },
             { $inc: { sellingQuantity: -1 } });
     } else {
