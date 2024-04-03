@@ -283,9 +283,9 @@ exports.nftRelisted = catchAsync(async (req, res, next) => {
         return next(new AppError("No User found with that Firebase Token", 400))
     }
     const check = await TokenOwner.findOneAndUpdate({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of },
-        { $inc: { sellingQuantity: + req.body.sellingQuantity }, "price": req.body.price });
+        { $inc: { sellingQuantity: + req.body.sellingQuantity }, "price": req.body.price, "listing_id": req.body.listing_id });
     if (!check) {
-        await TokenOwner.create({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of, "amount": req.body.sellingQuantity, "name": req.body.name, "symbol": req.body.symbol, "sellingQuantity": req.body.sellingQuantity, "price": req.body.price });
+        await TokenOwner.create(req.body);
     };
     const newSeller = await TokenOwner.findOne({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.owner_of })
     res.status(200).json({
