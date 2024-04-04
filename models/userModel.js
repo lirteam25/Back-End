@@ -62,6 +62,10 @@ const userSchema = new mongoose.Schema({
         type: Number
     },
 
+    contract_id: {
+        type: String
+    },
+
     artist_soundcloud_subscription: {
         type: Number
     },
