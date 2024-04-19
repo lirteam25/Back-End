@@ -10,6 +10,7 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 
 //We must import the files from user and nft
+const authTokenRouter = require("./routes/authToken")
 const tokenInfoRouter = require("./routes/tokenInfoRoute");
 const tokenOwnersRouter = require("./routes/tokenOwnerRoute");
 const usersRouter = require("./routes/usersRoute");
@@ -101,6 +102,7 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
+app.use("/api/v1/authToken", authTokenRouter)
 app.use("/api/v1/nfts", tokenInfoRouter);
 app.use("/api/v1/owners", tokenOwnersRouter);
 app.use("/api/v1/users", usersRouter);
