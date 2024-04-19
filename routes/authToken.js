@@ -8,6 +8,6 @@ const router = express.Router();
     .get(aliasTopNFTs, getAllNFTsInfo); */
 
 router.route('/')
-    .get(authTokenController.authToken)
+    .post(authTokenController.authToken)
 
 module.exports = router;
