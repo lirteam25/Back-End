@@ -14,9 +14,9 @@ exports.authToken = async function login(req, res) {
     return res.status(401).json({ error });
   }
 
-  const existingUser = await User.findOne({ wallet: address });
+  const existingUser = await User.findOne({ wallet: address.toLocaleLowerCase() });
   if (!existingUser) {
-    const newUser = await User.create({ wallet: address });
+    const newUser = await User.create({ wallet: address.toLocaleLowerCase() });
   }
 
   // Generate a JWT token for the user to be used on the client-side.
