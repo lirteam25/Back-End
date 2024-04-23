@@ -1,4 +1,5 @@
 const { verifyLogin } = require("@thirdweb-dev/auth/evm");
+const User = require("./../models/userModel");
 const admin = require('firebase-admin');
 
 exports.authToken = async function login(req, res) {
@@ -11,6 +12,11 @@ exports.authToken = async function login(req, res) {
   );
   if (!address) {
     return res.status(401).json({ error });
+  }
+
+  const existingUser = await User.findOne({ wallet: address });
+  if (!existingUser) {
+    const newUser = await User.create({ wallet: address });
   }
 
   // Generate a JWT token for the user to be used on the client-side.
