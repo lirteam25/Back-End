@@ -11,6 +11,11 @@ const TokenInfoSchema = new mongoose.Schema({
         required: [true, "Specify the smart contract that minted the NFT"],
     },
 
+    /* contract_id: {
+        type: String,
+        required: [true, "Provide the contract id"]
+    }, */
+
     name: {
         type: String,
         required: [true, "Provide the name of the tokens"],
@@ -55,7 +60,6 @@ const TokenInfoSchema = new mongoose.Schema({
 
     musicTag: {
         type: Array,
-        required: [true, "Provide the music tag"]
     },
 
     imageSongPinata: {
@@ -87,6 +91,7 @@ const TokenInfoSchema = new mongoose.Schema({
 
     audioDuration: {
         type: String,
+        required: [true, "Provide the audio duration"],
     },
 
     token_URI: {
