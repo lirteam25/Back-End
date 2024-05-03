@@ -126,18 +126,10 @@ exports.nftSold = catchAsync(async (req, res, next) => {
 
     const price = seller.price;
 
-    /* Send Email
-    const UserSeller = await User.findOne({ "wallet": req.body.owner_of });
-    const sellerEmail = await admin.auth()
-        .getUser(UserSeller.uid).then((result) => {
-            const email = result.email
-            return email;
-        })
-        .catch(function (error) {
-            return next(new AppError(error, 401));
-        });
-    await sendEmail(sellerEmail, "LIR MUSIC - Your Track Has Been Sold",
-        `<html lang="en">
+    if (user.artist_email) {
+        //Send Email
+        await sendEmail(user.artist_email, "LIR MUSIC - Your Track Has Been Sold",
+            `<html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -182,7 +174,8 @@ exports.nftSold = catchAsync(async (req, res, next) => {
                         
                               </div>
               </html>`
-    ); */
+        );
+    }
 
     //Update newOwner
     let updateData = { $inc: { amount: +1 } };
