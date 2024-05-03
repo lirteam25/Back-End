@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
         type: String,
     },
 
+    artist_email: {
+        type: String,
+    },
+
     artist_photo: {
         type: String
     },
