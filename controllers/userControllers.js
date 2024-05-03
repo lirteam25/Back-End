@@ -175,38 +175,15 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
                 _id: 0, // Exclude the default _id field
                 owner_of: '$_id', // Rename _id as owner_of
                 uid: '$userDetails.uid', // Include the uid field from User
+                display_name: '$userDetails.display_name',
                 count: 1 // Include the count field
             }
         }
     ]);
 
-
-    const uids = top10Owners.map(owner => owner.uid);
-
-    const displayNames = {};
-    await Promise.all(
-        uids.map(async uid => {
-            try {
-                const userRecord = await User.find({ uid })
-                displayNames[uid] = userRecord.displayName || 'No display name'; // Setting displayName or default message
-            } catch (error) {
-                console.error('Error fetching user:', error);
-                displayNames[uid] = 'No display name'; // Set a default message in case of an error
-            }
-        })
-    );
-
-    // Combining displayNames with top10Owners
-    const enrichedTop10Owners = top10Owners.map(owner => ({
-        owner_of: owner.owner_of,
-        uid: owner.uid,
-        count: owner.count,
-        displayName: displayNames[owner.uid]
-    }));
-
     res.status(200).json({
         status: "success",
-        topCollectors: enrichedTop10Owners
+        topCollectors: top10Owners
     });
 })
 
