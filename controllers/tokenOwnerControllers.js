@@ -125,10 +125,11 @@ exports.nftSold = catchAsync(async (req, res, next) => {
     }
 
     const price = seller.price;
+    const sellerUser = await User.find({ "uid": req.body.owner_of })
 
-    if (seller.artist_email) {
+    if (sellerUser.artist_email) {
         //Send Email
-        await sendEmail(seller.artist_email, "LIR MUSIC - Your Track Has Been Sold",
+        await sendEmail(sellerUser.artist_email, "LIR MUSIC - Your Track Has Been Sold",
             `<html lang="en">
         <head>
             <meta charset="UTF-8">
