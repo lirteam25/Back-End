@@ -126,9 +126,9 @@ exports.nftSold = catchAsync(async (req, res, next) => {
 
     const price = seller.price;
 
-    if (user.artist_email) {
+    if (seller.artist_email) {
         //Send Email
-        await sendEmail(user.artist_email, "LIR MUSIC - Your Track Has Been Sold",
+        await sendEmail(seller.artist_email, "LIR MUSIC - Your Track Has Been Sold",
             `<html lang="en">
         <head>
             <meta charset="UTF-8">
