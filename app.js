@@ -10,7 +10,7 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 
 //We must import the files from user and nft
-const authTokenRouter = require("./routes/authToken")
+const authTokenRouter = require("./routes/authTokenRoute")
 const tokenInfoRouter = require("./routes/tokenInfoRoute");
 const tokenOwnersRouter = require("./routes/tokenOwnerRoute");
 const usersRouter = require("./routes/usersRoute");
