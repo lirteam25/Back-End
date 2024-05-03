@@ -176,7 +176,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
     if (!user) {
         return next(new AppError("No User found with that email", 400))
     }
-    const NFTowned = await TokenOwner.find({ "owner_of": user.wallet, "amount": { $gt: 0 } }).sort({ date: -1 });
+    const NFTowned = await TokenOwner.find({ "owner_of": user.uid, "amount": { $gt: 0 } }).sort({ date: -1 });
     console.log(NFTowned);
     let NFTInfoOwned = [];
     if (NFTowned.length === 0) {
@@ -211,7 +211,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                 }
             ]);
 
-            const modifiedItems = { ...item.toObject(), "owner_id": NFTowned[i]._id, "owner_of": user.wallet, "amount": NFTowned[i].amount, "sellingQuantity": NFTowned[i].sellingQuantity, "price": NFTowned[i].price, "date": NFTowned[i].date, "floor_price": minPriceItem[0].min_price };
+            const modifiedItems = { ...item.toObject(), "owner_id": NFTowned[i]._id, "owner_of": user.uid, "amount": NFTowned[i].amount, "sellingQuantity": NFTowned[i].sellingQuantity, "price": NFTowned[i].price, "date": NFTowned[i].date, "floor_price": minPriceItem[0].min_price };
             NFTInfoOwned = [...NFTInfoOwned, modifiedItems];
         }
     }
