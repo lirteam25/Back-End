@@ -13,14 +13,7 @@ exports.createNFTOwner = catchAsync(async (req, res, next) => {
 
     //Email creation
     const user = await User.findOne(req.user);
-    const userEmail = await admin.auth()
-        .getUser(user.uid).then((result) => {
-            const email = result.email
-            return email;
-        })
-        .catch(function (error) {
-            return next(new AppError(error, 401));
-        });
+    const userEmail = user.artist_email;
     await sendEmail(userEmail, "LIR MUSIC - Your Tokens Have Been Created",
         `<html lang="en">
         <head>

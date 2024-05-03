@@ -1,10 +1,14 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-    wallet: {
+    uid: {
         type: String,
         unique: [true, "One wallet can be connected only to one user. Please change the wallet connected because already connected to another account"],
         required: [true, "Wallet is required"],
+    },
+
+    display_name: {
+        type: String,
     },
 
     role: {
