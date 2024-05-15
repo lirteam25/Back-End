@@ -11,10 +11,9 @@ const TokenInfoSchema = new mongoose.Schema({
         required: [true, "Specify the smart contract that minted the NFT"],
     },
 
-    /* contract_id: {
-        type: String,
-        required: [true, "Provide the contract id"]
-    }, */
+    collection_id: {
+        type: String
+    },
 
     name: {
         type: String,
