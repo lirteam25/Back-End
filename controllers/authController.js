@@ -13,8 +13,8 @@ exports.verifyTokenFirebase = catchAsync(async (req, res, next) => {
             .auth()
             .verifyIdToken(idToken)
             .then(async function (decodedToken) {
-                const uid = decodedToken.uid.toLowerCase();
-                req.user = { "wallet": uid };
+                const uid = decodedToken.uid;
+                req.user = { "uid": uid };
                 next();
             })
             .catch(function (error) {

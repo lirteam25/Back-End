@@ -21,14 +21,6 @@ const nftOwnersSchema = new mongoose.Schema({
         required: [true, "Provide the amount owned"]
     },
 
-    contract_type: {
-        type: String,
-    },
-
-    token_hash: {
-        type: String,
-    },
-
     check: {
         type: Boolean,
         default: true,

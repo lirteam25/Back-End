@@ -24,21 +24,19 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     if (!user) {
         return next(new AppError("No User found", 400))
     }
-    if (req.body.wallet == "undefined") {
+    /* if (req.body.wallet == "undefined") {
         await User.findOneAndUpdate(req.user, {
             $unset: {
                 "wallet": ""
             }
         }, {
             runValidators: true,
-        });
-    } else {
-        await User.findOneAndUpdate(req.user, req.body, {
-            //remove the previous data and create the new one
-            new: true,
-            runValidators: true,
-        });
-    };
+        }); */
+    await User.findOneAndUpdate(req.user, req.body, {
+        //remove the previous data and create the new one
+        new: true,
+        runValidators: true,
+    });
     const userUpdated = await User.findOne(req.user);
     //Send response
     res.status(200).json({
@@ -90,19 +88,10 @@ exports.getSingleUser = catchAsync(async (req, res, next) => {
 });
 
 exports.createUser = catchAsync(async (req, res) => {
-    if (req.body.wallet) {
-        const existingUser = await User.findOne({ wallet: req.body.wallet });
-
+    if (req.body.uid) {
+        const existingUser = await User.findOne({ uid: req.body.uid });
         if (existingUser) {
-            req.body.wallet = undefined;
-            const user = await User.create({ ...req.user, ...req.body });
-            return res.status(200).json({
-                status: "success",
-                message: "A user with this wallet already exists, but the new user has been created without setting the wallet parameter.",
-                data: {
-                    user: user,
-                }
-            });
+            return next(new AppError("User already exists", 400))
         }
     }
 
@@ -117,35 +106,19 @@ exports.createUser = catchAsync(async (req, res) => {
 });
 
 exports.createUserGoogleLogin = catchAsync(async (req, res) => {
-    const user = await User.findOne(req.user);
-    if (!user) {
-        const existingUser = await User.findOne({ wallet: req.body.wallet });
+    if (req.body.uid) {
+        const existingUser = await User.findOne({ uid: req.body.uid });
         if (existingUser) {
-            req.body.wallet = undefined;
-            const newUser = await User.create({ ...req.user, ...req.body });
-            return res.status(200).json({
-                status: "success",
-                message: "A user with this wallet already exists, but the new user has been created without setting the wallet parameter.",
-                data: {
-                    user: newUser,
-                }
-            });
+            return next(new AppError("User already exists", 400))
         }
-        const newUser = await User.create({ ...req.user, ...req.body });
-        res.status(201).json({
-            status: "success",
-            data: {
-                user: newUser,
-            }
-        });
-    } else {
-        res.status(200).json({
-            status: "success",
-            data: {
-                user: user,
-            }
-        })
-    };
+    }
+    const newUser = await User.create({ ...req.user, ...req.body });
+    res.status(201).json({
+        status: "success",
+        data: {
+            user: newUser,
+        }
+    });
 });
 
 exports.fetchArtistName = catchAsync(async (req, res) => {
@@ -160,7 +133,7 @@ exports.fetchArtistName = catchAsync(async (req, res) => {
             artist_instagram: artist.artist_instagram,
             artist_spotify: artist.artist_spotify,
             artist_soundcloud: artist.artist_soundcloud,
-            wallet: artist.wallet
+            wallet: artist.uid
         }
     })
 });
@@ -190,7 +163,7 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
             $lookup: {
                 from: 'users', // The name of the User collection
                 localField: '_id', // Field from the Owner collection
-                foreignField: 'wallet', // Field from the User collection (changed to wallet)
+                foreignField: 'uid', // Field from the User collection (changed to wallet)
                 as: 'userDetails' // Alias for the joined user details
             }
         },
@@ -202,38 +175,15 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
                 _id: 0, // Exclude the default _id field
                 owner_of: '$_id', // Rename _id as owner_of
                 uid: '$userDetails.uid', // Include the uid field from User
+                display_name: '$userDetails.display_name',
                 count: 1 // Include the count field
             }
         }
     ]);
 
-
-    const uids = top10Owners.map(owner => owner.uid);
-
-    const displayNames = {};
-    await Promise.all(
-        uids.map(async uid => {
-            try {
-                const userRecord = await admin.auth().getUser(uid);
-                displayNames[uid] = userRecord.displayName || 'No display name'; // Setting displayName or default message
-            } catch (error) {
-                console.error('Error fetching user:', error);
-                displayNames[uid] = 'No display name'; // Set a default message in case of an error
-            }
-        })
-    );
-
-    // Combining displayNames with top10Owners
-    const enrichedTop10Owners = top10Owners.map(owner => ({
-        owner_of: owner.owner_of,
-        uid: owner.uid,
-        count: owner.count,
-        displayName: displayNames[owner.uid]
-    }));
-
     res.status(200).json({
         status: "success",
-        topCollectors: enrichedTop10Owners
+        topCollectors: top10Owners
     });
 })
 
@@ -263,7 +213,7 @@ exports.getSupporters = catchAsync(async (req, res) => {
             $lookup: {
                 from: 'users',
                 localField: '_id',
-                foreignField: 'wallet',
+                foreignField: 'uid',
                 as: 'userDetails'
             }
         },
@@ -276,40 +226,14 @@ exports.getSupporters = catchAsync(async (req, res) => {
                 owner_of: '$_id',
                 uid: '$userDetails.uid',
                 count: 1,
+                display_name: '$userDetails.display_name',
                 picture: '$userDetails.picture'
             }
         }
     ]);
 
-    console.log(collectors);
-
-
-    const uids = collectors.map(owner => owner.uid);
-
-    const displayNames = {};
-    await Promise.all(
-        uids.map(async uid => {
-            try {
-                const userRecord = await admin.auth().getUser(uid);
-                displayNames[uid] = userRecord.displayName || 'No display name'; // Setting displayName or default message
-            } catch (error) {
-                console.error('Error fetching user:', error);
-                displayNames[uid] = 'No display name'; // Set a default message in case of an error
-            }
-        })
-    );
-
-    // Combining displayNames with top10Owners
-    const enrichedTop10Owners = collectors.map(owner => ({
-        owner_of: owner.owner_of,
-        uid: owner.uid,
-        count: owner.count,
-        displayName: displayNames[owner.uid],
-        picture: owner.picture,
-    }));
-
     res.status(200).json({
         status: "success",
-        supporters: enrichedTop10Owners
+        supporters: collectors,
     });
 })
