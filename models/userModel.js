@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
         type: String,
     },
 
+    artist_contract_id: {
+        type: String,
+    },
+
     artist_name: {
         type: String,
     },
