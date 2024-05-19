@@ -266,7 +266,10 @@ exports.nftSold = catchAsync(async (req, res, next) => {
 });
 
 exports.nftSondCreditCard = catchAsync(async (req, res, next) => {
-    const user = await User.findOne({ "uid": req.body.buyer });
+    const user = await User.findOne(req.user);
+    if (!user) {
+        return next(new AppError("No User found with that Firebase Token", 400))
+    }
     if (!user) {
         return next(new AppError("No User found with that wallet", 400))
     }
@@ -333,18 +336,18 @@ exports.nftSondCreditCard = catchAsync(async (req, res, next) => {
 
     //Update newOwner
     let updateData = { $inc: { amount: +1 } };
-    const check1 = await TokenOwner.findOne({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.buyer })
+    const check1 = await TokenOwner.findOne({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.user.uid })
     if (check1) {
         if (check1.amount === 0) {
             updateData.$set = { date: new Date() };
         }
-        await TokenOwner.findOneAndUpdate({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.buyer },
+        await TokenOwner.findOneAndUpdate({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.user.uid },
             updateData
         );
     } else {
-        await TokenOwner.create({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.buyer, "amount": 1 });
+        await TokenOwner.create({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.user.uid, "amount": 1 });
     }
-    const newOwner = await TokenOwner.findOne({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.body.buyer });
+    const newOwner = await TokenOwner.findOne({ "token_id": req.body.token_id, "token_address": req.body.token_address, "owner_of": req.user.uid });
     res.status(200).json({
         status: "success",
         data: {

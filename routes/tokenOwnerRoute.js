@@ -15,7 +15,7 @@ router.route("/nftSold")
     .patch(authController.verifyTokenFirebase, tokenOwnerControllers.nftSold);
 
 router.route("/nftSoldCreditCard")
-    .patch(tokenOwnerControllers.nftSondCreditCard)
+    .patch(authController.verifyTokenFirebase, tokenOwnerControllers.nftSondCreditCard)
 
 router.route("/nftRelisted")
     .patch(authController.verifyTokenFirebase, tokenOwnerControllers.nftRelisted);
