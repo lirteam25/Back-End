@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
         type: String,
     },
 
-    artist_contract_id: {
+    artist_collection_id: {
         type: String,
     },
 
