@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema({
         type: Number
     },
 
+    artist_possible_collaborator: {
+        type: Array
+    },
+
     artist_soundcloud_subscription: {
         type: Number
     },

@@ -41,12 +41,12 @@ const TokenInfoSchema = new mongoose.Schema({
     },
 
     artist: {
-        type: String,
+        type: Array,
         required: [true, "Provide the name of the artist"]
     },
 
     author_address: {
-        type: String,
+        type: Array,
         required: [true, "Provide the author address"],
     },
 
