@@ -4,6 +4,17 @@ const TokenOwner = require("../models/tokenOwnerModel");
 const APIFeatures = require("../Utils/apiFeatures");
 const catchAsync = require("../Utils/catchAsync");
 const AppError = require("../Utils/appError");
+const { Alchemy, Network } = require("alchemy-sdk");
+const { createThirdwebClient, getContract, readContract, resolveMethod } = require("thirdweb");
+const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
+const { polygonAmoy } = require("thirdweb/chains");
+const { ethers } = require("ethers");
+
+const config = {
+    apiKey: process.env.ALCHEMY_API_KEY,
+    network: Network.MATIC_AMOY,
+};
+const alchemy = new Alchemy(config);
 
 
 exports.getAllNFTsInfo = catchAsync(async (req, res, next) => {
@@ -115,7 +126,7 @@ exports.updateNFT = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
+/* exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
     const NFTOwned = await TokenOwner.findById(req.params.id);
     if (!NFTOwned) {
         return next(new AppError("No NFT Owner found with that ID", 400))
@@ -168,61 +179,117 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
             ownerNFTInfo
         }
     });
+}); */
+
+exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
+    const client = createThirdwebClient({
+        clientId: process.env.THIRDWEB_PROJECT_ID,
+    });
+
+    const walletAddress = req.params.id;
+    console.log(walletAddress);
+
+    // Fetch NFTs owned by the wallet through Alchemy API
+    const nftsResponse = await alchemy.nft.getNftsForOwner(walletAddress);
+    const ownedNFTs = nftsResponse.ownedNfts;
+
+    let ownerNFTInfoList = [];
+
+    for (const nft of ownedNFTs) {
+        const token_address = nft.contract.address;
+        const token_id = nft.tokenId;
+
+        // Find the NFT information from the TokenInfo model
+        const item = await TokenInfo.findOne({ token_id, token_address }).select("+description");
+        if (item) {
+            try {
+                const chain = polygonAmoy;
+
+                // Use Thirdweb SDK to get active claim conditions
+                const contract = getContract({ client, chain, address: token_address });
+                const activeClaimConditions = await getActiveClaimCondition({
+                    contract,
+                    tokenId: token_id
+                });
+
+                // Convert BigInt values to strings and handle price conversion for USDC
+                const convertedConditions = Object.entries(activeClaimConditions).reduce((acc, [key, value]) => {
+                    if (key === "pricePerToken") {
+                        acc[key] = ethers.utils.formatUnits(value.toString(), 6); // Convert smallest unit to USDC (6 decimals)
+                    } else {
+                        acc[key] = typeof value === 'bigint' ? value.toString() : value;
+                    }
+                    return acc;
+                }, {});
+
+                // Remove supply and price attributes from token object
+                const { supply, launch_price, ...tokenWithoutSupplyAndPrice } = item.toObject();
+
+                // Merge converted conditions into the token object
+                const modifiedItems = {
+                    ...tokenWithoutSupplyAndPrice,
+                    ...convertedConditions
+                };
+
+                ownerNFTInfoList.push(modifiedItems);
+            } catch (error) {
+                console.error(`Error fetching active claim conditions for token ID ${token_id} at address ${token_address}:`, error);
+            }
+        }
+    }
+
+    if (ownerNFTInfoList.length === 0) {
+        return next(new AppError("No NFTs found with active claim conditions", 404));
+    }
+
+    res.status(200).json({
+        status: "success",
+        data: {
+            ownerNFTInfo: ownerNFTInfoList
+        }
+    });
 });
+
 
 
 exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
     const user = await User.findOne(req.user);
     if (!user) {
-        return next(new AppError("No User found with that email", 400))
+        return next(new AppError("No User found with that email", 400));
     }
-    const NFTowned = await TokenOwner.find({ "owner_of": user.uid, "amount": { $gt: 0 } }).sort({ date: -1 });
-    console.log(NFTowned);
+
     let NFTInfoOwned = [];
-    if (NFTowned.length === 0) {
+
+    // Get NFTs using Alchemy API
+    const nftsResponse = await alchemy.nft.getNftsForOwner(user.uid);
+    const NFTs = nftsResponse.ownedNfts;
+
+    if (NFTs.length === 0) {
         return res.status(200).json({
             status: "success",
             data: {
                 NFTInfoOwned
             }
-        })
-    };
-    for (let i = 0; i < NFTowned.length; i++) {
-        const item = await TokenInfo.findOne({ "token_id": NFTowned[i].token_id, "token_address": NFTowned[i].token_address }).select("+audioCloudinary");
-        if (item) {
-            const minPriceItem = await TokenOwner.aggregate([
-                {
-                    $match: {
-                        token_id: NFTowned[i].token_id,
-                        token_address: NFTowned[i].token_address
-                    }
-                },
-                {
-                    $group: {
-                        _id: {
-                            token_id: "$token_id",
-                            token_address: "$token_address"
-                        },
-                        min_price: { $min: "$price" }
-                    }
-                },
-                {
-                    $limit: 1
-                }
-            ]);
-
-            const modifiedItems = { ...item.toObject(), "owner_id": NFTowned[i]._id, "owner_of": user.uid, "amount": NFTowned[i].amount, "sellingQuantity": NFTowned[i].sellingQuantity, "price": NFTowned[i].price, "date": NFTowned[i].date, "floor_price": minPriceItem[0].min_price };
-            NFTInfoOwned = [...NFTInfoOwned, modifiedItems];
-        }
+        });
     }
+
+    for (const nft of NFTs) {
+        const token_id = nft.tokenId;
+        const token_address = nft.contract.address;
+
+        const item = await TokenInfo.findOne({ "token_id": token_id, "token_address": token_address }).select("+audioCloudinary");
+        NFTInfoOwned.push(item);
+    }
+
     res.status(200).json({
         status: "success",
         result: NFTInfoOwned.length,
         data: {
             NFTInfoOwned
         }
-    })
+    });
 });
+
 
 exports.getCreatedSongs = catchAsync(async (req, res, next) => {
     const features = new APIFeatures(TokenInfo.find(), req.query)

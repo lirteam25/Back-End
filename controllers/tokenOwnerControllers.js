@@ -6,6 +6,11 @@ const APIFeatures = require("../Utils/apiFeatures");
 const AppError = require("../Utils/appError");
 const admin = require('firebase-admin');
 const { sendEmail } = require("../Utils/sendEmail");
+const { Alchemy, Network } = require("alchemy-sdk");
+const { createThirdwebClient, getContract, readContract, resolveMethod } = require("thirdweb");
+const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
+const { polygonAmoy } = require("thirdweb/chains");
+const { ethers } = require("ethers");
 
 //Create NFT
 exports.createNFTOwner = catchAsync(async (req, res, next) => {
@@ -72,7 +77,7 @@ exports.createNFTOwner = catchAsync(async (req, res, next) => {
     })
 });
 
-exports.getNFTOwners = catchAsync(async (req, res, next) => {
+/* exports.getNFTOwners = catchAsync(async (req, res, next) => {
     const features = new APIFeatures(TokenOwner.find(), req.query)
         .filter()
         .sort()
@@ -87,6 +92,35 @@ exports.getNFTOwners = catchAsync(async (req, res, next) => {
             owners,
         },
     });
+}); */
+
+exports.getNFTOwners = catchAsync(async (req, res, next) => {
+
+    const config = {
+        apiKey: process.env.ALCHEMY_API_KEY,
+        network: Network.MATIC_AMOY,
+    };
+    const alchemy = new Alchemy(config);
+
+    const token_address = req.query.token_address;
+    const token_id = req.query.token_id;
+
+    try {
+        // Fetch NFT owners using Alchemy SDK
+        const owners = await alchemy.nft.getOwnersForNft(token_address, token_id);
+
+        // Send response
+        res.status(200).json({
+            status: "success",
+            result: owners.owners.length,
+            data: {
+                owners: owners.owners,
+            },
+        });
+    } catch (error) {
+        console.log(error)
+        return next(new AppError("Error fetching NFT owners", 500));
+    }
 });
 
 exports.getMyNFTs = catchAsync(async (req, res, next) => {
@@ -345,6 +379,71 @@ exports.getSingleOwner = catchAsync(async (req, res, next) => {
 });
 
 exports.getDiscoverItem = catchAsync(async (req, res, next) => {
+
+    const client = createThirdwebClient({
+        clientId: process.env.THIRDWEB_PROJECT_ID,
+    });
+
+    // Step 1: Fetch distinct smart contracts from TokenInfo
+    const contracts = await TokenInfo.distinct("token_address");
+
+    let discoverNFT = [];
+
+    // Step 2: Loop through each contract
+    for (const address of contracts) {
+        // Fetch all token info for the current contract
+        const tokens = await TokenInfo.find({ token_address: address });
+
+        for (const token of tokens) {
+            try {
+                const chain = polygonAmoy;
+
+                // Step 3: Use Thirdweb SDK to get active claim conditions
+                const contract = getContract({ client, chain, address });
+                const activeClaimConditions = await getActiveClaimCondition({
+                    contract,
+                    tokenId: token.token_id
+                });
+
+                // Convert BigInt values to strings and handle price conversion for USDC
+                const convertedConditions = Object.entries(activeClaimConditions).reduce((acc, [key, value]) => {
+                    if (key === "pricePerToken") {
+                        acc[key] = ethers.utils.formatUnits(value.toString(), 6); // Convert smallest unit to USDC (6 decimals)
+                    } else {
+                        acc[key] = typeof value === 'bigint' ? value.toString() : value;
+                    }
+                    return acc;
+                }, {});
+
+                // Remove supply and price attributes from token object
+                const { supply, launch_price, ...tokenWithoutSupplyAndPrice } = token.toObject();
+
+                // Merge converted conditions into the token object
+                const modifiedItems = {
+                    ...tokenWithoutSupplyAndPrice,
+                    ...convertedConditions
+                };
+
+                discoverNFT.push(modifiedItems);
+            } catch (error) {
+                console.error(`Error fetching claim conditions for token ID ${token.token_id} at address ${address}:`, error);
+            }
+        }
+    }
+
+    // Step 4: Sort the discoverNFT array by created_at date
+    discoverNFT.sort((b, a) => new Date(a.created_at) - new Date(b.created_at));
+
+    // Step 5: Send the response
+    res.status(200).json({
+        status: "success",
+        data: {
+            discoverNFT
+        },
+    });
+});
+
+/* exports.getDiscoverItem = catchAsync(async (req, res, next) => {
     const sellingNFT = await TokenOwner.aggregate([
         { $match: { sellingQuantity: { $gte: 1 } } },
         { $sort: { token_id: 1, token_address: 1, price: 1 } },
@@ -373,9 +472,80 @@ exports.getDiscoverItem = catchAsync(async (req, res, next) => {
             discoverNFT
         },
     })
-})
+}) */
 
 exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
+    const client = createThirdwebClient({
+        clientId: process.env.THIRDWEB_PROJECT_ID,
+    });
+
+    const artistWallet = req.query.artist_wallet;
+
+    // Step 1: Fetch token info for the given artist wallet address
+    const tokens = await TokenInfo.find({ author_address: artistWallet });
+
+    if (tokens.length === 0) {
+        return next(new AppError("No tokens found for the given artist wallet address", 404));
+    }
+
+    let artNFT = [];
+
+    // Step 2: Loop through each token for the given artist
+    for (const token of tokens) {
+        try {
+            const chain = polygonAmoy;
+            const token_address = token.token_address;
+            const token_id = token.token_id;
+
+            // Step 3: Use Thirdweb SDK to get active claim conditions
+            const contract = getContract({ client, chain, address: token_address });
+            const activeClaimConditions = await getActiveClaimCondition({
+                contract,
+                tokenId: token_id
+            });
+
+            // Convert BigInt values to strings and handle price conversion for USDC
+            const convertedConditions = Object.entries(activeClaimConditions).reduce((acc, [key, value]) => {
+                if (key === "pricePerToken") {
+                    acc[key] = ethers.utils.formatUnits(value.toString(), 6); // Convert smallest unit to USDC (6 decimals)
+                } else {
+                    acc[key] = typeof value === 'bigint' ? value.toString() : value;
+                }
+                return acc;
+            }, {});
+
+            // Remove supply and price attributes from token object
+            const { supply, launch_price, ...tokenWithoutSupplyAndPrice } = token.toObject();
+
+            // Merge converted conditions into the token object
+            const modifiedItems = {
+                ...tokenWithoutSupplyAndPrice,
+                ...convertedConditions
+            };
+
+            artNFT.push(modifiedItems);
+        } catch (error) {
+            console.error(`Error fetching active claim conditions for token ID ${token.token_id} at address ${token.token_address}:`, error);
+        }
+    }
+
+    if (artNFT.length === 0) {
+        return next(new AppError("No NFTs found with active claim conditions", 404));
+    }
+
+    // Step 5: Sort the artNFT array by created_at date
+    artNFT.sort((b, a) => new Date(a.created_at) - new Date(b.created_at));
+
+    // Step 6: Send the response
+    res.status(200).json({
+        status: "success",
+        data: {
+            artNFT
+        }
+    });
+});
+
+/* exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
     const cnt = req.query.cnt;
     const artistNFT = await TokenOwner.aggregate([
         { $match: { token_address: cnt, sellingQuantity: { $gt: 0 } } },
@@ -408,4 +578,4 @@ exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
             artNFT
         },
     })
-})
+}) */
