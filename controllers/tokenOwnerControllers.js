@@ -11,6 +11,7 @@ const { createThirdwebClient, getContract, readContract, resolveMethod } = requi
 const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
 const { polygonAmoy } = require("thirdweb/chains");
 const { ethers } = require("ethers");
+const { parse } = require("@ethersproject/transactions");
 
 //Create NFT
 exports.createNFTOwner = catchAsync(async (req, res, next) => {
@@ -500,7 +501,7 @@ exports.getDiscoverItem = catchAsync(async (req, res, next) => {
                 // Convert BigInt values to strings and handle price conversion for USDC
                 const convertedConditions = Object.entries(activeClaimConditions).reduce((acc, [key, value]) => {
                     if (key === "pricePerToken") {
-                        acc[key] = ethers.utils.formatUnits(value.toString(), 6); // Convert smallest unit to USDC (6 decimals)
+                        acc[key] = parseFloat(ethers.utils.formatUnits(value.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
                     } else {
                         acc[key] = typeof value === 'bigint' ? value.toString() : value;
                     }
@@ -571,7 +572,7 @@ exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
         clientId: process.env.THIRDWEB_PROJECT_ID,
     });
 
-    const artistWallet = req.query.artist_wallet;
+    const artistWallet = req.query.uid;
 
     // Step 1: Fetch token info for the given artist wallet address
     const tokens = await TokenInfo.find({ author_address: artistWallet });
@@ -599,7 +600,7 @@ exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
             // Convert BigInt values to strings and handle price conversion for USDC
             const convertedConditions = Object.entries(activeClaimConditions).reduce((acc, [key, value]) => {
                 if (key === "pricePerToken") {
-                    acc[key] = ethers.utils.formatUnits(value.toString(), 6); // Convert smallest unit to USDC (6 decimals)
+                    acc[key] = parseFloat(ethers.utils.formatUnits(value.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
                 } else {
                     acc[key] = typeof value === 'bigint' ? value.toString() : value;
                 }

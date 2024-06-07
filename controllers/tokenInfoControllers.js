@@ -186,68 +186,55 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
         clientId: process.env.THIRDWEB_PROJECT_ID,
     });
 
-    const walletAddress = req.params.id;
-    console.log(walletAddress);
+    const tokenId = req.params.token_id;
+    const tokenAddress = req.params.token_address;
+    const walletAddress = req.params.uid;
 
-    // Fetch NFTs owned by the wallet through Alchemy API
-    const nftsResponse = await alchemy.nft.getNftsForOwner(walletAddress);
-    const ownedNFTs = nftsResponse.ownedNfts;
+    // Find the NFT information from the TokenInfo model
+    const item = await TokenInfo.findOne({ token_id: tokenId, token_address: tokenAddress }).select("+description");
+    if (!item) {
+        return next(new AppError("No NFT found with the given token ID and address", 400));
+    }
 
-    let ownerNFTInfoList = [];
+    try {
+        const chain = polygonAmoy;
 
-    for (const nft of ownedNFTs) {
-        const token_address = nft.contract.address;
-        const token_id = nft.tokenId;
+        // Use Thirdweb SDK to get active claim conditions
+        const contract = getContract({ client, chain, address: tokenAddress });
+        const activeClaimConditions = await getActiveClaimCondition({
+            contract,
+            tokenId: tokenId
+        });
 
-        // Find the NFT information from the TokenInfo model
-        const item = await TokenInfo.findOne({ token_id, token_address }).select("+description");
-        if (item) {
-            try {
-                const chain = polygonAmoy;
-
-                // Use Thirdweb SDK to get active claim conditions
-                const contract = getContract({ client, chain, address: token_address });
-                const activeClaimConditions = await getActiveClaimCondition({
-                    contract,
-                    tokenId: token_id
-                });
-
-                // Convert BigInt values to strings and handle price conversion for USDC
-                const convertedConditions = Object.entries(activeClaimConditions).reduce((acc, [key, value]) => {
-                    if (key === "pricePerToken") {
-                        acc[key] = ethers.utils.formatUnits(value.toString(), 6); // Convert smallest unit to USDC (6 decimals)
-                    } else {
-                        acc[key] = typeof value === 'bigint' ? value.toString() : value;
-                    }
-                    return acc;
-                }, {});
-
-                // Remove supply and price attributes from token object
-                const { supply, launch_price, ...tokenWithoutSupplyAndPrice } = item.toObject();
-
-                // Merge converted conditions into the token object
-                const modifiedItems = {
-                    ...tokenWithoutSupplyAndPrice,
-                    ...convertedConditions
-                };
-
-                ownerNFTInfoList.push(modifiedItems);
-            } catch (error) {
-                console.error(`Error fetching active claim conditions for token ID ${token_id} at address ${token_address}:`, error);
+        // Convert BigInt values to strings and handle price conversion for USDC
+        const convertedConditions = Object.entries(activeClaimConditions).reduce((acc, [key, value]) => {
+            if (key === "pricePerToken") {
+                acc[key] = parseFloat(ethers.utils.formatUnits(value.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
+            } else {
+                acc[key] = typeof value === 'bigint' ? value.toString() : value;
             }
-        }
-    }
+            return acc;
+        }, {});
 
-    if (ownerNFTInfoList.length === 0) {
-        return next(new AppError("No NFTs found with active claim conditions", 404));
-    }
+        // Remove supply and price attributes from token object
+        const { supply, launch_price, ...tokenWithoutSupplyAndPrice } = item.toObject();
 
-    res.status(200).json({
-        status: "success",
-        data: {
-            ownerNFTInfo: ownerNFTInfoList
-        }
-    });
+        // Merge converted conditions into the token object
+        const ownerNFTInfo = {
+            ...tokenWithoutSupplyAndPrice,
+            ...convertedConditions
+        };
+
+        res.status(200).json({
+            status: "success",
+            data: {
+                ownerNFTInfo
+            }
+        });
+    } catch (error) {
+        console.error(`Error fetching active claim conditions for token ID ${tokenId} at address ${tokenAddress}:`, error);
+        return next(new AppError("Error fetching active claim conditions", 500));
+    }
 });
 
 
@@ -273,13 +260,61 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         });
     }
 
+    const client = createThirdwebClient({
+        clientId: process.env.THIRDWEB_PROJECT_ID,
+    });
+
     for (const nft of NFTs) {
         const token_id = nft.tokenId;
         const token_address = nft.contract.address;
 
         const item = await TokenInfo.findOne({ "token_id": token_id, "token_address": token_address }).select("+audioCloudinary");
         if (item) {
-            NFTInfoOwned.push(item);
+            let pricePerToken = "0";
+            let maxClaimableSupply = "0";
+            let amount = "0";
+
+            const chain = polygonAmoy;
+            const contract = getContract({ client, chain, address: token_address });
+
+            // Check if the wallet (user.uid) is the author of the TokenInfo model
+            if (item.author_address === user.uid) {
+                try {
+                    // Use Thirdweb SDK to get active claim conditions
+                    const activeClaimConditions = await getActiveClaimCondition({
+                        contract,
+                        tokenId: token_id
+                    });
+
+                    // Convert BigInt values to strings and handle price conversion for USDC
+                    pricePerToken = parseFloat(ethers.utils.formatUnits(activeClaimConditions.pricePerToken.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
+                    maxClaimableSupply = activeClaimConditions.maxClaimableSupply.toString();
+                } catch (error) {
+                    console.error(`Error fetching active claim conditions for token ID ${token_id} at address ${token_address}:`, error);
+                }
+            }
+
+            // Read the balance of the wallet (user.id) for the specific token_id
+            try {
+                const balanceData = await readContract({
+                    contract,
+                    method: resolveMethod("balanceOf"),
+                    params: [user.uid, token_id]
+                });
+                amount = balanceData.toString();
+            } catch (error) {
+                console.error(`Error reading balance for token ID ${token_id} at address ${token_address}:`, error);
+            }
+
+            // Create the item with pricePerToken, maxClaimableSupply, and amount
+            const modifiedItem = {
+                ...item.toObject(),
+                pricePerToken,
+                maxClaimableSupply,
+                amount
+            };
+
+            NFTInfoOwned.push(modifiedItem);
         }
     }
 
