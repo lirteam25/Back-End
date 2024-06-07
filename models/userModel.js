@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
         type: String,
     },
 
+    artist_collection_id: {
+        type: String,
+    },
+
     artist_name: {
         type: String,
     },
@@ -64,8 +68,8 @@ const userSchema = new mongoose.Schema({
         type: Number
     },
 
-    contract_id: {
-        type: String
+    artist_possible_collaborator: {
+        type: Array
     },
 
     artist_soundcloud_subscription: {

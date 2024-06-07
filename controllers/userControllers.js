@@ -122,20 +122,25 @@ exports.createUserGoogleLogin = catchAsync(async (req, res) => {
 });
 
 exports.fetchArtistName = catchAsync(async (req, res) => {
-    const cnt = req.query.cnt;
-    const artist = await User.findOne({ "artist_minting_contract": cnt });
-    res.status(200).json({
-        status: "success",
-        data: {
-            artist_name: artist.artist_name,
-            artist_photo: artist.artist_photo,
-            artist_description: artist.artist_description,
-            artist_instagram: artist.artist_instagram,
-            artist_spotify: artist.artist_spotify,
-            artist_soundcloud: artist.artist_soundcloud,
-            wallet: artist.uid
-        }
-    })
+    const uid = req.query.uid;
+    const artist = await User.findOne({ "uid": uid });
+    if (artist.role == "artist") {
+        res.status(200).json({
+            status: "success",
+            data: {
+                artist_name: artist.artist_name,
+                artist_photo: artist.artist_photo,
+                artist_description: artist.artist_description,
+                artist_instagram: artist.artist_instagram,
+                artist_spotify: artist.artist_spotify,
+                artist_soundcloud: artist.artist_soundcloud,
+                artist_minting_contract: artist.artist_minting_contract,
+                wallet: artist.uid
+            }
+        })
+    } else {
+        return next(new AppError("User is not an artist", 400))
+    }
 });
 
 exports.getTopCollectors = catchAsync(async (req, res) => {
