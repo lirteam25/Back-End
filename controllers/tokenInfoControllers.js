@@ -278,7 +278,9 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         const token_address = nft.contract.address;
 
         const item = await TokenInfo.findOne({ "token_id": token_id, "token_address": token_address }).select("+audioCloudinary");
-        NFTInfoOwned.push(item);
+        if (item) {
+            NFTInfoOwned.push(item);
+        }
     }
 
     res.status(200).json({
