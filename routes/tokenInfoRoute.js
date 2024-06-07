@@ -17,11 +17,11 @@ const router = express.Router();
 /* router.route('/top-5-nfts')
     .get(aliasTopNFTs, getAllNFTsInfo); */
 
+router.route('/ownersNFTInfo/:token_id/:token_address/:uid')
+    .get(getOwnerNFTInfo);
+
 router.route('/ownersNFTInfo')
     .get(authController.verifyTokenFirebase, getSongsFromFirebaseToken)
-
-router.route('/ownersNFTInfo/:id')
-    .get(getOwnerNFTInfo);
 
 router.route('/sameSongToVersions').get(getSameSongNFTInfo);
 
