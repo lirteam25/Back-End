@@ -278,21 +278,25 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
             const contract = getContract({ client, chain, address: token_address });
 
             // Check if the wallet (user.uid) is the author of the TokenInfo model
-            if (item.author_address === user.uid) {
-                try {
-                    // Use Thirdweb SDK to get active claim conditions
-                    const activeClaimConditions = await getActiveClaimCondition({
-                        contract,
-                        tokenId: token_id
-                    });
 
-                    // Convert BigInt values to strings and handle price conversion for USDC
+            try {
+                // Use Thirdweb SDK to get active claim conditions
+                const activeClaimConditions = await getActiveClaimCondition({
+                    contract,
+                    tokenId: token_id
+                });
+
+                // Convert BigInt values to strings and handle price conversion for USDC
+                if (activeClaimConditions) {
                     pricePerToken = parseFloat(ethers.utils.formatUnits(activeClaimConditions.pricePerToken.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
-                    maxClaimableSupply = activeClaimConditions.maxClaimableSupply.toString();
-                } catch (error) {
-                    console.error(`Error fetching active claim conditions for token ID ${token_id} at address ${token_address}:`, error);
+                    if (item.author_address === user.uid) {
+                        maxClaimableSupply = activeClaimConditions.maxClaimableSupply.toString();
+                    }
                 }
+            } catch (error) {
+                console.error(`Error fetching active claim conditions for token ID ${token_id} at address ${token_address}:`, error);
             }
+
 
             // Read the balance of the wallet (user.id) for the specific token_id
             try {
