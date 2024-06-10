@@ -271,7 +271,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         const item = await TokenInfo.findOne({ "token_id": token_id, "token_address": token_address }).select("+audioCloudinary");
         if (item) {
             let pricePerToken = "0";
-            let maxClaimableSupply = "0";
+            let sellingQuantity = "0";
             let amount = "0";
 
             const chain = polygonAmoy;
@@ -290,7 +290,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                 if (activeClaimConditions) {
                     pricePerToken = parseFloat(ethers.utils.formatUnits(activeClaimConditions.pricePerToken.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
                     if (item.author_address === user.uid) {
-                        maxClaimableSupply = activeClaimConditions.maxClaimableSupply.toString();
+                        sellingQuantity = activeClaimConditions.maxClaimableSupply.toString();
                     }
                 }
             } catch (error) {
@@ -314,7 +314,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
             const modifiedItem = {
                 ...item.toObject(),
                 pricePerToken,
-                maxClaimableSupply,
+                sellingQuantity,
                 amount
             };
 

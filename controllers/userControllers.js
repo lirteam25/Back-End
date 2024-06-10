@@ -4,6 +4,17 @@ const catchAsync = require("./../Utils/catchAsync");
 const AppError = require("./../Utils/appError");
 const APIFeatures = require("../Utils/apiFeatures");
 const admin = require('firebase-admin');
+const { Alchemy, Network } = require("alchemy-sdk");
+const { createThirdwebClient, getContract, readContract, resolveMethod } = require("thirdweb");
+const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
+const { polygonAmoy } = require("thirdweb/chains");
+const { ethers } = require("ethers");
+
+const config = {
+    apiKey: process.env.ALCHEMY_API_KEY,
+    network: Network.MATIC_AMOY,
+};
+const alchemy = new Alchemy(config);
 
 
 exports.getMe = catchAsync(async (req, res, next) => {
@@ -193,7 +204,7 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
 })
 
 
-exports.getSupporters = catchAsync(async (req, res) => {
+/* exports.getSupporters = catchAsync(async (req, res) => {
     const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
     const Seller = await Owner.findById(req.params.id);
 
@@ -241,4 +252,67 @@ exports.getSupporters = catchAsync(async (req, res) => {
         status: "success",
         supporters: collectors,
     });
-})
+}) */
+
+exports.getSupporters = catchAsync(async (req, res) => {
+    const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
+    const token_id = req.params.token_id;
+    const token_address = req.params.token_address;
+
+    // Fetch owners using Alchemy SDK
+    const nftsResponse = await alchemy.nft.getOwnersForNft(token_address, token_id);
+    const ownerWallets = nftsResponse.owners;
+
+    // Initialize Thirdweb client
+    const client = createThirdwebClient({
+        clientId: process.env.THIRDWEB_PROJECT_ID,
+    });
+
+    const chain = polygonAmoy; // Assuming polygonAmoy is defined
+
+    // Initialize an array to hold the supporters' data
+    let supporters = [];
+
+    for (const wallet of ownerWallets) {
+        if (excludedOwners.includes(wallet)) {
+            continue;
+        }
+
+        // Find user by wallet address
+        const user = await User.findOne({ uid: wallet });
+        if (user) {
+            try {
+                // Get contract
+                const contract = getContract({ client, chain, address: token_address });
+
+                // Read balance
+                const balanceData = await readContract({
+                    contract,
+                    method: resolveMethod("balanceOf"),
+                    params: [wallet, token_id]
+                });
+
+                const amount = balanceData.toString();
+
+                // Add user info to the supporters array
+                supporters.push({
+                    owner_of: wallet,
+                    uid: user.uid,
+                    count: parseInt(amount, 10), // Assuming count is an integer
+                    display_name: user.display_name,
+                    picture: user.picture
+                });
+            } catch (error) {
+                console.error(`Error fetching balance for wallet ${wallet}:`, error);
+            }
+        }
+    }
+
+    // Sort supporters by count in descending order
+    supporters.sort((a, b) => b.count - a.count);
+
+    res.status(200).json({
+        status: "success",
+        supporters: supporters,
+    });
+});
