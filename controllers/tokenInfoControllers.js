@@ -302,7 +302,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                         maxClaimableSupply = activeClaimConditions.maxClaimableSupply;
                         supplyClaimed = activeClaimConditions.supplyClaimed;
                         sellingQuantity = maxClaimableSupply - supplyClaimed;
-                        sellingQuantity = sellingQuantity.toString();
+                        sellingQuantity = sellingQuantity;
                     }
                 }
             } catch (error) {
