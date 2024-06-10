@@ -197,6 +197,7 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
     }
 
     try {
+        let sellingQuantity = 0;
         const chain = polygonAmoy;
 
         // Use Thirdweb SDK to get active claim conditions
@@ -216,13 +217,21 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
             return acc;
         }, {});
 
+        if (item.author_address === walletAddress) {
+            maxClaimableSupply = activeClaimConditions.maxClaimableSupply;
+            supplyClaimed = activeClaimConditions.supplyClaimed;
+            sellingQuantity = maxClaimableSupply - supplyClaimed;
+            sellingQuantity = sellingQuantity;
+        }
+
         // Remove supply and price attributes from token object
         const { supply, launch_price, ...tokenWithoutSupplyAndPrice } = item.toObject();
 
         // Merge converted conditions into the token object
         const ownerNFTInfo = {
             ...tokenWithoutSupplyAndPrice,
-            ...convertedConditions
+            ...convertedConditions,
+            sellingQuantity
         };
 
         res.status(200).json({
@@ -271,8 +280,8 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         const item = await TokenInfo.findOne({ "token_id": token_id, "token_address": token_address }).select("+audioCloudinary");
         if (item) {
             let pricePerToken = "0";
-            let sellingQuantity = "0";
-            let amount = "0";
+            let sellingQuantity = 0;
+            let amount = 0;
 
             const chain = polygonAmoy;
             const contract = getContract({ client, chain, address: token_address });
@@ -290,7 +299,10 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                 if (activeClaimConditions) {
                     pricePerToken = parseFloat(ethers.utils.formatUnits(activeClaimConditions.pricePerToken.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
                     if (item.author_address === user.uid) {
-                        sellingQuantity = activeClaimConditions.maxClaimableSupply.toString();
+                        maxClaimableSupply = activeClaimConditions.maxClaimableSupply;
+                        supplyClaimed = activeClaimConditions.supplyClaimed;
+                        sellingQuantity = maxClaimableSupply - supplyClaimed;
+                        sellingQuantity = sellingQuantity.toString();
                     }
                 }
             } catch (error) {
@@ -305,7 +317,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                     method: resolveMethod("balanceOf"),
                     params: [user.uid, token_id]
                 });
-                amount = balanceData.toString();
+                amount = balanceData;
             } catch (error) {
                 console.error(`Error reading balance for token ID ${token_id} at address ${token_address}:`, error);
             }
