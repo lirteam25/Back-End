@@ -1,5 +1,5 @@
 const User = require("./../models/userModel");
-const Owner = require("./../models/tokenOwnerModel");
+const TokenInfo = require("../models/tokenInfoModel");
 const catchAsync = require("./../Utils/catchAsync");
 const AppError = require("./../Utils/appError");
 const APIFeatures = require("../Utils/apiFeatures");
@@ -9,6 +9,7 @@ const { createThirdwebClient, getContract, readContract, resolveMethod } = requi
 const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
 const { polygonAmoy } = require("thirdweb/chains");
 const { ethers } = require("ethers");
+const PriorityQueue = require('js-priority-queue');
 
 const config = {
     apiKey: process.env.ALCHEMY_API_KEY,
@@ -154,7 +155,7 @@ exports.fetchArtistName = catchAsync(async (req, res) => {
     }
 });
 
-exports.getTopCollectors = catchAsync(async (req, res) => {
+/* exports.getTopCollectors = catchAsync(async (req, res) => {
     const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
 
     const top10Owners = await Owner.aggregate([
@@ -201,7 +202,83 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
         status: "success",
         topCollectors: top10Owners
     });
-})
+}) */
+
+exports.getTopCollectors = catchAsync(async (req, res) => {
+    const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
+    const BATCH_SIZE = 100; // Define the batch size for fetching users
+
+    // Initialize a priority queue to keep track of the top 10 collectors
+    const topCollectorsQueue = new PriorityQueue({ comparator: (a, b) => a.count - b.count });
+
+    // Helper function to update the top collectors queue
+    const updateTopCollectors = (collector) => {
+        if (topCollectorsQueue.length < 10) {
+            topCollectorsQueue.queue(collector);
+        } else if (collector.count > topCollectorsQueue.peek().count) {
+            topCollectorsQueue.dequeue();
+            topCollectorsQueue.queue(collector);
+        }
+    };
+
+    let lastUserId = null;
+    while (true) {
+        // Fetch users in batches
+        const query = lastUserId ? { _id: { $gt: lastUserId } } : {};
+        const usersBatch = await User.find(query).sort({ _id: 1 }).limit(BATCH_SIZE);
+        if (usersBatch.length === 0) break; // Exit loop if no more users
+
+        for (const user of usersBatch) {
+            // Skip excluded owners
+            if (excludedOwners.includes(user.uid)) {
+                continue;
+            }
+
+            // Get NFTs using Alchemy SDK
+            const nftsResponse = await alchemy.nft.getNftsForOwner(user.uid);
+            const NFTs = nftsResponse.ownedNfts;
+
+            let validNFTCount = 0;
+
+            for (const nft of NFTs) {
+                const token_id = nft.tokenId;
+                const token_address = nft.contract.address;
+
+                // Check if the NFT exists in the TokenInfo model
+                const item = await TokenInfo.findOne({ token_id, token_address });
+                if (item) {
+                    validNFTCount++;
+                }
+            }
+
+            // Update top collectors queue
+            if (validNFTCount > 0) {
+                const collector = {
+                    owner_of: user.uid,
+                    uid: user.uid,
+                    display_name: user.display_name,
+                    count: validNFTCount
+                };
+                updateTopCollectors(collector);
+            }
+        }
+
+        // Update last user ID to fetch the next batch
+        lastUserId = usersBatch[usersBatch.length - 1]._id;
+    }
+
+    // Extract top collectors from the priority queue and sort them in descending order
+    const topCollectors = [];
+    while (topCollectorsQueue.length > 0) {
+        topCollectors.push(topCollectorsQueue.dequeue());
+    }
+    topCollectors.reverse();
+
+    res.status(200).json({
+        status: "success",
+        topCollectors: topCollectors
+    });
+});
 
 
 /* exports.getSupporters = catchAsync(async (req, res) => {
