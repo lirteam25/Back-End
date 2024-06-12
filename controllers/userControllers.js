@@ -336,9 +336,17 @@ exports.getSupporters = catchAsync(async (req, res) => {
     const token_id = req.params.token_id;
     const token_address = req.params.token_address;
 
-    // Fetch owners using Alchemy SDK
-    const nftsResponse = await alchemy.nft.getOwnersForNft(token_address, token_id);
-    const ownerWallets = nftsResponse.owners;
+    // Initialize an array to hold the supporters' data
+    let supporters = [];
+    let ownerWallets = [];
+
+    try {
+        // Fetch owners using Alchemy SDK
+        const nftsResponse = await alchemy.nft.getOwnersForNft(token_address, token_id);
+        ownerWallets = nftsResponse.owners;
+    } catch (error) {
+        console.error(`Error fetching owners for token_id ${token_id} and token_address ${token_address}:`, error);
+    }
 
     // Initialize Thirdweb client
     const client = createThirdwebClient({
@@ -346,9 +354,6 @@ exports.getSupporters = catchAsync(async (req, res) => {
     });
 
     const chain = polygonAmoy; // Assuming polygonAmoy is defined
-
-    // Initialize an array to hold the supporters' data
-    let supporters = [];
 
     for (const wallet of ownerWallets) {
         if (excludedOwners.includes(wallet)) {
