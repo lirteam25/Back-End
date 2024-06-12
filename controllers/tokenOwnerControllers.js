@@ -105,23 +105,24 @@ exports.getNFTOwners = catchAsync(async (req, res, next) => {
 
     const token_address = req.query.token_address;
     const token_id = req.query.token_id;
+    let owners = [];
 
     try {
         // Fetch NFT owners using Alchemy SDK
-        const owners = await alchemy.nft.getOwnersForNft(token_address, token_id);
+        const nftsResponse = await alchemy.nft.getOwnersForNft(token_address, token_id);
+        owners = nftsResponse.owners;
 
-        // Send response
-        res.status(200).json({
-            status: "success",
-            result: owners.owners.length,
-            data: {
-                owners: owners.owners,
-            },
-        });
     } catch (error) {
         console.log(error)
-        return next(new AppError("Error fetching NFT owners", 500));
     }
+    // Send response
+    res.status(200).json({
+        status: "success",
+        result: owners.length,
+        data: {
+            owners: owners,
+        },
+    });
 });
 
 exports.getMyNFTs = catchAsync(async (req, res, next) => {

@@ -197,6 +197,8 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
     }
 
     try {
+        let maxClaimableSupply = 0;
+        let supplyClaimed = 0;
         let sellingQuantity = 0;
         const chain = polygonAmoy;
 
@@ -218,10 +220,9 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
         }, {});
 
         if (item.author_address === walletAddress) {
-            maxClaimableSupply = activeClaimConditions.maxClaimableSupply;
-            supplyClaimed = activeClaimConditions.supplyClaimed;
+            maxClaimableSupply = Number(activeClaimConditions.maxClaimableSupply);
+            supplyClaimed = Number(activeClaimConditions.supplyClaimed);
             sellingQuantity = maxClaimableSupply - supplyClaimed;
-            sellingQuantity = sellingQuantity;
         }
 
         // Remove supply and price attributes from token object
@@ -279,6 +280,8 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
 
         const item = await TokenInfo.findOne({ "token_id": token_id, "token_address": token_address }).select("+audioCloudinary");
         if (item) {
+            let maxClaimableSupply = 0;
+            let supplyClaimed = 0;
             let pricePerToken = "0";
             let sellingQuantity = 0;
             let amount = 0;
@@ -299,10 +302,9 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                 if (activeClaimConditions) {
                     pricePerToken = parseFloat(ethers.utils.formatUnits(activeClaimConditions.pricePerToken.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
                     if (item.author_address === user.uid) {
-                        maxClaimableSupply = activeClaimConditions.maxClaimableSupply;
-                        supplyClaimed = activeClaimConditions.supplyClaimed;
+                        maxClaimableSupply = Number(activeClaimConditions.maxClaimableSupply);
+                        supplyClaimed = Number(activeClaimConditions.supplyClaimed);
                         sellingQuantity = maxClaimableSupply - supplyClaimed;
-                        sellingQuantity = sellingQuantity;
                     }
                 }
             } catch (error) {
