@@ -256,25 +256,18 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
     }
 
     let NFTInfoOwned = [];
+    let nftsResponse;
+    let pageKey;
 
-    // Get NFTs using Alchemy API
-    const nftsResponse = await alchemy.nft.getNftsForOwner(user.uid);
-    const NFTs = nftsResponse.ownedNfts;
-
-    if (NFTs.length === 0) {
-        return res.status(200).json({
-            status: "success",
-            data: {
-                NFTInfoOwned
-            }
-        });
-    }
-
+    // Initialize Thirdweb client
     const client = createThirdwebClient({
         clientId: process.env.THIRDWEB_PROJECT_ID,
     });
 
-    for (const nft of NFTs) {
+    const chain = polygonAmoy;
+
+    // Function to process individual NFT
+    const processNFT = async (nft) => {
         const token_id = nft.tokenId;
         const token_address = nft.contract.address;
 
@@ -282,14 +275,11 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         if (item) {
             let maxClaimableSupply = 0;
             let supplyClaimed = 0;
-            let pricePerToken = "0";
+            let pricePerToken = 0;
             let sellingQuantity = 0;
             let amount = 0;
 
-            const chain = polygonAmoy;
             const contract = getContract({ client, chain, address: token_address });
-
-            // Check if the wallet (user.uid) is the author of the TokenInfo model
 
             try {
                 // Use Thirdweb SDK to get active claim conditions
@@ -298,7 +288,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                     tokenId: token_id
                 });
 
-                // Convert BigInt values to strings and handle price conversion for USDC
+                // Convert BigInt values to numbers and handle price conversion for USDC
                 if (activeClaimConditions) {
                     pricePerToken = parseFloat(ethers.utils.formatUnits(activeClaimConditions.pricePerToken.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
                     if (item.author_address === user.uid) {
@@ -311,15 +301,14 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                 console.error(`Error fetching active claim conditions for token ID ${token_id} at address ${token_address}:`, error);
             }
 
-
-            // Read the balance of the wallet (user.id) for the specific token_id
             try {
+                // Read the balance of the wallet (user.id) for the specific token_id
                 const balanceData = await readContract({
                     contract,
                     method: resolveMethod("balanceOf"),
                     params: [user.uid, token_id]
                 });
-                amount = balanceData;
+                amount = Number(balanceData);
             } catch (error) {
                 console.error(`Error reading balance for token ID ${token_id} at address ${token_address}:`, error);
             }
@@ -332,9 +321,22 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
                 amount
             };
 
-            NFTInfoOwned.push(modifiedItem);
+            return modifiedItem;
         }
-    }
+        return null;
+    };
+
+    // Loop through all pages of the Alchemy API response
+    do {
+        // Get NFTs using Alchemy API
+        nftsResponse = await alchemy.nft.getNftsForOwner(user.uid, { pageKey });
+        const NFTs = nftsResponse.ownedNfts;
+        pageKey = nftsResponse.pageKey;
+
+        // Process NFTs concurrently
+        const processedNFTs = await Promise.all(NFTs.map(processNFT));
+        NFTInfoOwned.push(...processedNFTs.filter(item => item !== null));
+    } while (pageKey);
 
     res.status(200).json({
         status: "success",
@@ -344,6 +346,8 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         }
     });
 });
+
+
 
 
 exports.getCreatedSongs = catchAsync(async (req, res, next) => {

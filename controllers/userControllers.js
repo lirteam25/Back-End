@@ -10,6 +10,7 @@ const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
 const { polygonAmoy } = require("thirdweb/chains");
 const { ethers } = require("ethers");
 const PriorityQueue = require('js-priority-queue');
+const async = require('async');
 
 const config = {
     apiKey: process.env.ALCHEMY_API_KEY,
@@ -207,6 +208,7 @@ exports.fetchArtistName = catchAsync(async (req, res) => {
 exports.getTopCollectors = catchAsync(async (req, res) => {
     const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
     const BATCH_SIZE = 100; // Define the batch size for fetching users
+    const CONCURRENCY_LIMIT = 10; // Set a limit for concurrent user processing
 
     // Initialize a priority queue to keep track of the top 10 collectors
     const topCollectorsQueue = new PriorityQueue({ comparator: (a, b) => a.count - b.count });
@@ -222,52 +224,53 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
     };
 
     let lastUserId = null;
-    while (true) {
-        // Fetch users in batches
-        const query = lastUserId ? { _id: { $gt: lastUserId } } : {};
-        const usersBatch = await User.find(query).sort({ _id: 1 }).limit(BATCH_SIZE);
-        if (usersBatch.length === 0) break; // Exit loop if no more users
 
-        for (const user of usersBatch) {
-            // Skip excluded owners
-            if (excludedOwners.includes(user.uid)) {
-                continue;
-            }
+    const processUser = async (user) => {
+        if (excludedOwners.includes(user.uid)) {
+            return;
+        }
 
-            // Get NFTs using Alchemy SDK
-            const nftsResponse = await alchemy.nft.getNftsForOwner(user.uid);
+        let pageKey = null;
+        let validNFTCount = 0;
+
+        do {
+            const nftsResponse = await alchemy.nft.getNftsForOwner(user.uid, { pageKey });
             const NFTs = nftsResponse.ownedNfts;
-
-            let validNFTCount = 0;
+            pageKey = nftsResponse.pageKey;
 
             for (const nft of NFTs) {
                 const token_id = nft.tokenId;
                 const token_address = nft.contract.address;
-
-                // Check if the NFT exists in the TokenInfo model
                 const item = await TokenInfo.findOne({ token_id, token_address });
                 if (item) {
                     validNFTCount++;
                 }
             }
+        } while (pageKey);
 
-            // Update top collectors queue
-            if (validNFTCount > 0) {
-                const collector = {
-                    owner_of: user.uid,
-                    uid: user.uid,
-                    display_name: user.display_name,
-                    count: validNFTCount
-                };
-                updateTopCollectors(collector);
-            }
+        if (validNFTCount > 0) {
+            const collector = {
+                owner_of: user.uid,
+                uid: user.uid,
+                display_name: user.display_name,
+                count: validNFTCount
+            };
+            updateTopCollectors(collector);
         }
+    };
 
-        // Update last user ID to fetch the next batch
+    while (true) {
+        const query = lastUserId ? { _id: { $gt: lastUserId } } : {};
+        const usersBatch = await User.find(query).sort({ _id: 1 }).limit(BATCH_SIZE);
+        if (usersBatch.length === 0) break;
+
+        await async.eachLimit(usersBatch, CONCURRENCY_LIMIT, async (user) => {
+            await processUser(user);
+        });
+
         lastUserId = usersBatch[usersBatch.length - 1]._id;
     }
 
-    // Extract top collectors from the priority queue and sort them in descending order
     const topCollectors = [];
     while (topCollectorsQueue.length > 0) {
         topCollectors.push(topCollectorsQueue.dequeue());
@@ -279,6 +282,7 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
         topCollectors: topCollectors
     });
 });
+
 
 
 /* exports.getSupporters = catchAsync(async (req, res) => {

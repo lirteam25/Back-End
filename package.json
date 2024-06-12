@@ -4,6 +4,7 @@
   "description": "backend ",
   "main": "app.js",
   "dependencies": {
+    "async": "3.2.5",
     "@thirdweb-dev/auth": "^4.1.63",
     "thirdweb": "^5.16.0",
     "alchemy-sdk": "^3.3.1",
