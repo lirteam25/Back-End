@@ -623,14 +623,10 @@ exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
         }
     }
 
-    if (artNFT.length === 0) {
-        return next(new AppError("No NFTs found with active claim conditions", 404));
-    }
-
-    // Step 5: Sort the artNFT array by created_at date
+    // Step 4: Sort the artNFT array by created_at date
     artNFT.sort((b, a) => new Date(a.created_at) - new Date(b.created_at));
 
-    // Step 6: Send the response
+    // Step 5: Send the response
     res.status(200).json({
         status: "success",
         data: {
