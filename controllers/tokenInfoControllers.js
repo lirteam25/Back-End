@@ -219,7 +219,7 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
             return acc;
         }, {});
 
-        if (item.author_address === walletAddress) {
+        if (item.author_address.includes(walletAddress)) {
             maxClaimableSupply = Number(activeClaimConditions.maxClaimableSupply);
             supplyClaimed = Number(activeClaimConditions.supplyClaimed);
             sellingQuantity = maxClaimableSupply - supplyClaimed;
