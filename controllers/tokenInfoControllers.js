@@ -105,11 +105,9 @@ exports.createNFTInfo = catchAsync(async (req, res, next) => {
         </div>
                 <div style="background-color:rgb(27,27,27); padding: 10px 30px; border: 1px solid rgb(48, 48, 48); margin: 40px 0; font-size: 18px;">
                   <p style="margin: 20px 0;">Dear ${newNFT.artist},</p>
-                  <p style="margin: 20px 0">Congratulations on creating your token representing your exclusive music contents! We're excited to inform you that it wiil be available for purchase on our platform on ${newNFT.launch_date}$.</p>
-                  <p style="margin: 20px 0">Your music has the power to captivate and inspire, and by creating tokens, you're providing a unique opportunity for your fans and supporters to engage with your creative journey. With your tokens, fans can now own a piece of your music in a whole new way, enabling them to participate in the success and growth of your artistic endeavors. We encourage you to share the news with your fans and promote the availability of your tokens. This will help generate interest and create a buzz around your music.</p>
-                  <p>You can always listen to your collected tracks in our mobile application, currently only available on the
-                  <a style="color: rgb(214, 11, 82); text-decoration: none;" href='https://play.google.com/store/search?q=LIR%20MUSIC&c=apps&hl=it&gl=US&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>Google Play Store</a>. </p>
-                  <p style="margin: 20px 0">If you have any questions or need assistance in managing your tokens or promoting them to your audience, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
+                  <p style="margin: 20px 0">Congratulations on creating your token! We're excited to inform you that it wiil be available for purchase on our platform on ${newNFT.launch_date}.</p>
+                  <p style="margin: 20px 0">Your music has the power to captivate and inspire, and by creating tokens, you're providing a unique opportunity for your fans and supporters to engage with your creative journey. We encourage you to share the news with your fans and promote your tokens sale. This will help generate interest and create a buzz around your music.</p>
+                  <p style="margin: 20px 0">If you have any questions or need assistance, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
                   <p style="margin: 20px 0">Once again, congratulations on taking this exciting step in your music career!</p>
                   <p style="margin: 20px 0">Best regards,</p>
                   <p style="margin: 20px 0">The LIR Music Team</p>
