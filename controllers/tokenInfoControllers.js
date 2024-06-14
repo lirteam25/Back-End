@@ -8,12 +8,14 @@ const AppError = require("../Utils/appError");
 const { Alchemy, Network } = require("alchemy-sdk");
 const { createThirdwebClient, getContract, readContract, resolveMethod } = require("thirdweb");
 const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
-const { polygonAmoy } = require("thirdweb/chains");
+const { polygonAmoy, polygon } = require("thirdweb/chains");
 const { ethers } = require("ethers");
 
+const alchemyNetwork = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? Network.MATIC_MAINNET : Network.MATIC_AMOY;
+const apiKey = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? process.env.ALCHEMY_API_KEY : process.env.ALCHEMY_API_KEY_TEST
 const config = {
-    apiKey: process.env.ALCHEMY_API_KEY,
-    network: Network.MATIC_AMOY,
+    apiKey: apiKey,
+    network: alchemyNetwork,
 };
 const alchemy = new Alchemy(config);
 
@@ -231,6 +233,8 @@ exports.updateNFT = catchAsync(async (req, res, next) => {
 }); */
 
 exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
+
+    const chain = process.env.ACTIVE_CHAIN == "polygon" ? polygon : polygonAmoy;
     const client = createThirdwebClient({
         clientId: process.env.THIRDWEB_PROJECT_ID,
     });
@@ -249,7 +253,6 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
         let maxClaimableSupply = 0;
         let supplyClaimed = 0;
         let sellingQuantity = 0;
-        const chain = polygonAmoy;
 
         // Use Thirdweb SDK to get active claim conditions
         const contract = getContract({ client, chain, address: tokenAddress });
@@ -313,7 +316,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         clientId: process.env.THIRDWEB_PROJECT_ID,
     });
 
-    const chain = polygonAmoy;
+    const chain = process.env.ACTIVE_CHAIN == "polygon" ? polygon : polygonAmoy;
 
     // Function to process individual NFT
     const processNFT = async (nft) => {

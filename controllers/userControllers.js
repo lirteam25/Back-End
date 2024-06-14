@@ -7,14 +7,16 @@ const admin = require('firebase-admin');
 const { Alchemy, Network } = require("alchemy-sdk");
 const { createThirdwebClient, getContract, readContract, resolveMethod } = require("thirdweb");
 const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
-const { polygonAmoy } = require("thirdweb/chains");
+const { polygonAmoy, polygon } = require("thirdweb/chains");
 const { ethers } = require("ethers");
 const PriorityQueue = require('js-priority-queue');
 const async = require('async');
 
+const alchemyNetwork = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? Network.MATIC_MAINNET : Network.MATIC_AMOY;
+const apiKey = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? process.env.ALCHEMY_API_KEY : process.env.ALCHEMY_API_KEY_TEST
 const config = {
-    apiKey: process.env.ALCHEMY_API_KEY,
-    network: Network.MATIC_AMOY,
+    apiKey: apiKey,
+    network: alchemyNetwork,
 };
 const alchemy = new Alchemy(config);
 
@@ -357,7 +359,7 @@ exports.getSupporters = catchAsync(async (req, res) => {
         clientId: process.env.THIRDWEB_PROJECT_ID,
     });
 
-    const chain = polygonAmoy; // Assuming polygonAmoy is defined
+    const chain = process.env.ACTIVE_CHAIN == "polygon" ? polygon : polygonAmoy; // Assuming polygonAmoy is defined
 
     for (const wallet of ownerWallets) {
         if (excludedOwners.includes(wallet)) {

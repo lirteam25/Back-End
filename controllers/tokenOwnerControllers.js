@@ -9,7 +9,7 @@ const { sendEmail } = require("../Utils/sendEmail");
 const { Alchemy, Network } = require("alchemy-sdk");
 const { createThirdwebClient, getContract, readContract, resolveMethod } = require("thirdweb");
 const { getActiveClaimCondition } = require("thirdweb/extensions/erc1155");
-const { polygonAmoy } = require("thirdweb/chains");
+const { polygonAmoy, polygon } = require("thirdweb/chains");
 const { ethers } = require("ethers");
 const { parse } = require("@ethersproject/transactions");
 
@@ -97,9 +97,11 @@ exports.createNFTOwner = catchAsync(async (req, res, next) => {
 
 exports.getNFTOwners = catchAsync(async (req, res, next) => {
 
+    const alchemyNetwork = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? Network.MATIC_MAINNET : Network.MATIC_AMOY;
+    const apiKey = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? process.env.ALCHEMY_API_KEY : process.env.ALCHEMY_API_KEY_TEST
     const config = {
-        apiKey: process.env.ALCHEMY_API_KEY,
-        network: Network.MATIC_AMOY,
+        apiKey: apiKey,
+        network: alchemyNetwork,
     };
     const alchemy = new Alchemy(config);
 
@@ -478,6 +480,8 @@ exports.getDiscoverItem = catchAsync(async (req, res, next) => {
         clientId: process.env.THIRDWEB_PROJECT_ID,
     });
 
+    const chain = process.env.ACTIVE_CHAIN == "polygon" ? polygon : polygonAmoy;
+
     // Step 1: Fetch distinct smart contracts from TokenInfo
     const contracts = await TokenInfo.distinct("token_address");
 
@@ -490,7 +494,6 @@ exports.getDiscoverItem = catchAsync(async (req, res, next) => {
 
         for (const token of tokens) {
             try {
-                const chain = polygonAmoy;
 
                 // Step 3: Use Thirdweb SDK to get active claim conditions
                 const contract = getContract({ client, chain, address });
@@ -574,6 +577,7 @@ exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
     });
 
     const artistWallet = req.query.uid;
+    const chain = process.env.ACTIVE_CHAIN == "polygon" ? polygon : polygonAmoy;
 
     // Step 1: Fetch token info for the given artist wallet address
     const tokens = await TokenInfo.find({ author_address: artistWallet });
@@ -587,7 +591,6 @@ exports.getArtistSellingNFT = catchAsync(async (req, res, next) => {
     // Step 2: Loop through each token for the given artist
     for (const token of tokens) {
         try {
-            const chain = polygonAmoy;
             const token_address = token.token_address;
             const token_id = token.token_id;
 
