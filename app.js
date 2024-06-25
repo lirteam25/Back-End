@@ -111,7 +111,6 @@ app.use("/api/v1/artistForm", artistFormRouter);
 app.use("/api/v1/userListeningActivity", userListeningActivityRouter);
 app.use("/api/v1/report", snapshotRouter);
 
-
 //middleware for error handling. All: triggers for all the erorrs. 
 //If it is a user or nft request it will go in the user or nft route. Otherwise it will go in this.
 /* app.all("*", (req, res, next) => {
