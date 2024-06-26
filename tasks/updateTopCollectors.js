@@ -17,7 +17,7 @@ const TopCollector = require('../models/topCollectorModel');
 }; */
 
 const fetchNFTsForOwner = async (owner, pageKey = null) => {
-    const alchemyNetwork = process.env.ALCHEMY_NETWORK === "MATIC_MAINNET" ? "polygon-mainnet" : "polygon-mumbai";
+    const alchemyNetwork = process.env.ALCHEMY_NETWORK === "MATIC_MAINNET" ? "polygon-mainnet" : "polygon-amoy";
     const url = `https://${alchemyNetwork}.g.alchemy.com/nft/v3/${process.env.ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
 
     const fetch = await import('node-fetch').then(mod => mod.default); // Dynamic import
