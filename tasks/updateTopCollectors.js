@@ -1,11 +1,10 @@
-const axios = require('axios');
 const PriorityQueue = require('js-priority-queue');
 const async = require('async');
 const User = require('../models/userModel');
 const TokenInfo = require('../models/tokenInfoModel');
 const TopCollector = require('../models/topCollectorModel');
 
-const fetchNFTsForOwner = async (owner, pageKey = null) => {
+/* const fetchNFTsForOwner = async (owner, pageKey = null) => {
     const alchemyNetwork = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? "polygon-mainnet" : "polygon-amoy";
     const options = {
         method: 'GET',
@@ -15,6 +14,26 @@ const fetchNFTsForOwner = async (owner, pageKey = null) => {
 
     const response = await axios(options);
     return response.data;
+}; */
+
+const fetchNFTsForOwner = async (owner, pageKey = null) => {
+    const alchemyNetwork = process.env.ALCHEMY_NETWORK === "MATIC_MAINNET" ? "polygon-mainnet" : "polygon-mumbai";
+    const url = `https://${alchemyNetwork}.g.alchemy.com/nft/v3/${process.env.ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
+
+    const fetch = await import('node-fetch').then(mod => mod.default); // Dynamic import
+
+    const options = {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+    };
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch NFTs: ${response.statusText}`);
+    }
+
+    return response.json();
 };
 
 const updateTopCollectors = async () => {
