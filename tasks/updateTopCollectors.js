@@ -20,20 +20,43 @@ const fetchNFTsForOwner = async (owner, pageKey = null) => {
     const alchemyNetwork = process.env.ALCHEMY_NETWORK === "MATIC_MAINNET" ? "polygon-mainnet" : "polygon-amoy";
     const url = `https://${alchemyNetwork}.g.alchemy.com/nft/v3/${process.env.ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
 
-    const fetch = await import('node-fetch').then(mod => mod.default); // Dynamic import
-
     const options = {
         method: 'GET',
         headers: { accept: 'application/json' },
     };
 
-    const response = await fetch(url, options);
+    const fetch = await import('node-fetch').then(mod => mod.default); // Dynamic import
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch NFTs: ${response.statusText}`);
+    let attempts = 0;
+    const maxAttempts = 5;
+    const baseDelay = 1000; // Initial delay in milliseconds
+
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch(url, options);
+
+            if (response.status === 429) {
+                throw new Error('Rate limit exceeded');
+            }
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch NFTs: ${response.statusText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            if (error.message === 'Rate limit exceeded' && attempts < maxAttempts - 1) {
+                const delay = baseDelay * Math.pow(2, attempts); // Exponential backoff
+                console.log(`Rate limit exceeded. Retrying in ${delay / 1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                attempts++;
+            } else {
+                throw error;
+            }
+        }
     }
 
-    return response.json();
+    throw new Error('Max retries reached');
 };
 
 const updateTopCollectors = async () => {
@@ -105,8 +128,7 @@ const updateTopCollectors = async () => {
         topCollectors.push(topCollectorsQueue.dequeue());
     }
     topCollectors.reverse();
-
-    console.log(topCollectors);
+    console.log(collectors);
 
     await TopCollector.deleteMany({});
     await TopCollector.insertMany(topCollectors);
