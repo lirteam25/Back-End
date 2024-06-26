@@ -106,6 +106,8 @@ const updateTopCollectors = async () => {
     }
     topCollectors.reverse();
 
+    console.log(topCollectors);
+
     await TopCollector.deleteMany({});
     await TopCollector.insertMany(topCollectors);
 };
