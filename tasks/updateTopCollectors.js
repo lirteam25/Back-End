@@ -61,8 +61,9 @@ const fetchNFTsForOwner = async (owner, pageKey = null) => {
 
 const updateTopCollectors = async () => {
     const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
-    const BATCH_SIZE = 100;
-    const CONCURRENCY_LIMIT = 10;
+    const BATCH_SIZE = 10; // Reduce the batch size to lower the number of simultaneous requests
+    const CONCURRENCY_LIMIT = 2; // Lower concurrency to reduce API load
+    const BATCH_DELAY = 10000; // 10 seconds delay between batches
 
     const topCollectorsQueue = new PriorityQueue({ comparator: (a, b) => a.count - b.count });
 
@@ -121,6 +122,10 @@ const updateTopCollectors = async () => {
         });
 
         lastUserId = usersBatch[usersBatch.length - 1]._id;
+
+        // Add delay between batches
+        console.log(`Batch processed. Waiting for ${BATCH_DELAY / 1000} seconds before processing the next batch...`);
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
     }
 
     const topCollectors = [];
@@ -128,7 +133,7 @@ const updateTopCollectors = async () => {
         topCollectors.push(topCollectorsQueue.dequeue());
     }
     topCollectors.reverse();
-    console.log(collectors);
+    console.log(topCollectors);
 
     await TopCollector.deleteMany({});
     await TopCollector.insertMany(topCollectors);
