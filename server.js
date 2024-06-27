@@ -14,15 +14,17 @@ mongoose.connect(DB).then(() => {
 })
 
 // Cron job setup
-cron.schedule('0 * * * *', async () => {
-    console.log('Running top collectors update job...');
-    try {
-        await updateTopCollectors();
-        console.log('Top collectors update completed successfully.');
-    } catch (error) {
-        console.error('Error updating top collectors:', error);
-    }
-});
+if (process.env.NODE_ENV === 'production') {
+    cron.schedule('0 * * * *', async () => {
+        console.log('Running top collectors update job...');
+        try {
+            await updateTopCollectors();
+            console.log('Top collectors update completed successfully.');
+        } catch (error) {
+            console.error('Error updating top collectors:', error);
+        }
+    });
+}
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
