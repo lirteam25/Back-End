@@ -1,5 +1,6 @@
 const User = require("./../models/userModel");
 const TokenInfo = require("../models/tokenInfoModel");
+const TopCollector = require('../models/topCollectorModel');
 const catchAsync = require("./../Utils/catchAsync");
 const AppError = require("./../Utils/appError");
 const APIFeatures = require("../Utils/apiFeatures");
@@ -208,84 +209,16 @@ exports.fetchArtistName = catchAsync(async (req, res) => {
 }) */
 
 exports.getTopCollectors = catchAsync(async (req, res) => {
-    const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
-    const BATCH_SIZE = 100; // Define the batch size for fetching users
-    const CONCURRENCY_LIMIT = 10; // Set a limit for concurrent user processing
-
-    // Initialize a priority queue to keep track of the top 10 collectors
-    const topCollectorsQueue = new PriorityQueue({ comparator: (a, b) => a.count - b.count });
-
-    // Helper function to update the top collectors queue
-    const updateTopCollectors = (collector) => {
-        if (topCollectorsQueue.length < 10) {
-            topCollectorsQueue.queue(collector);
-        } else if (collector.count > topCollectorsQueue.peek().count) {
-            topCollectorsQueue.dequeue();
-            topCollectorsQueue.queue(collector);
-        }
-    };
-
-    let lastUserId = null;
-
-    const processUser = async (user) => {
-        if (excludedOwners.includes(user.uid)) {
-            return;
-        }
-
-        let pageKey = null;
-        let validNFTCount = 0;
-
-        do {
-            const nftsResponse = await alchemy.nft.getNftsForOwner(user.uid, { pageKey });
-            const NFTs = nftsResponse.ownedNfts;
-            pageKey = nftsResponse.pageKey;
-
-            for (const nft of NFTs) {
-                const token_id = nft.tokenId;
-                const token_address = nft.contract.address;
-                const item = await TokenInfo.findOne({ token_id, token_address });
-                if (item) {
-                    validNFTCount++;
-                }
-            }
-        } while (pageKey);
-
-        if (validNFTCount > 0) {
-            const collector = {
-                owner_of: user.uid,
-                uid: user.uid,
-                display_name: user.display_name,
-                count: validNFTCount
-            };
-            updateTopCollectors(collector);
-        }
-    };
-
-    while (true) {
-        const query = lastUserId ? { _id: { $gt: lastUserId } } : {};
-        const usersBatch = await User.find(query).sort({ _id: 1 }).limit(BATCH_SIZE);
-        if (usersBatch.length === 0) break;
-
-        await async.eachLimit(usersBatch, CONCURRENCY_LIMIT, async (user) => {
-            await processUser(user);
-        });
-
-        lastUserId = usersBatch[usersBatch.length - 1]._id;
-    }
-
-    const topCollectors = [];
-    while (topCollectorsQueue.length > 0) {
-        topCollectors.push(topCollectorsQueue.dequeue());
-    }
-    topCollectors.reverse();
+    // Query the TopCollector model to get the top collectors
+    const topCollectors = await TopCollector.find()
+        .sort({ count: -1 }) // Sort by count in descending order
+        .limit(10); // Limit to top 10 collectors
 
     res.status(200).json({
         status: "success",
         topCollectors: topCollectors
     });
 });
-
-
 
 /* exports.getSupporters = catchAsync(async (req, res) => {
     const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
