@@ -4,22 +4,10 @@ const User = require('../models/userModel');
 const TokenInfo = require('../models/tokenInfoModel');
 const TopCollector = require('../models/topCollectorModel');
 
-/* const fetchNFTsForOwner = async (owner, pageKey = null) => {
-    const alchemyNetwork = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? "polygon-mainnet" : "polygon-amoy";
-    const options = {
-        method: 'GET',
-        headers: { accept: 'application/json' },
-        url: `https://${alchemyNetwork}.g.alchemy.com/nft/v3/${process.env.ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`
-    };
-
-    const response = await axios(options);
-    return response.data;
-}; */
-
-const fetchNFTsForOwner = async (owner, pageKey = null) => {
+const fetchOwnersForNFT = async (contractAddress, tokenId) => {
     const alchemyNetwork = process.env.ALCHEMY_NETWORK === "MATIC_MAINNET" ? "polygon-mainnet" : "polygon-amoy";
-    const apiKey = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? process.env.ALCHEMY_API_KEY_CRON_PROD : process.env.ALCHEMY_API_KEY_TEST
-    const url = `https://${alchemyNetwork}.g.alchemy.com/nft/v3/${apiKey}/getNFTsForOwner?owner=${owner}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
+    const apiKey = process.env.ALCHEMY_NETWORK == "MATIC_MAINNET" ? process.env.ALCHEMY_API_KEY_CRON_PROD : process.env.ALCHEMY_API_KEY_TEST;
+    const url = `https://${alchemyNetwork}.g.alchemy.com/nft/v3/${apiKey}/getOwnersForNFT?contractAddress=${contractAddress}&tokenId=${tokenId}`;
 
     const options = {
         method: 'GET',
@@ -41,7 +29,7 @@ const fetchNFTsForOwner = async (owner, pageKey = null) => {
             }
 
             if (!response.ok) {
-                throw new Error(`Failed to fetch NFTs: ${response.statusText}`);
+                throw new Error(`Failed to fetch owners: ${response.statusText}`);
             }
 
             return await response.json();
@@ -61,9 +49,7 @@ const fetchNFTsForOwner = async (owner, pageKey = null) => {
 };
 
 const updateTopCollectors = async () => {
-    const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
     const BATCH_SIZE = 10; // Reduce the batch size to lower the number of simultaneous requests
-    const CONCURRENCY_LIMIT = 2; // Lower concurrency to reduce API load
     const BATCH_DELAY = 10000; // 10 seconds delay between batches
 
     const topCollectorsQueue = new PriorityQueue({ comparator: (a, b) => a.count - b.count });
@@ -77,56 +63,40 @@ const updateTopCollectors = async () => {
         }
     };
 
-    let lastUserId = null;
+    const tokenInfoList = await TokenInfo.find({});
+    const userMap = new Map();
 
-    const processUser = async (user) => {
-        if (excludedOwners.includes(user.uid)) {
-            return;
-        }
+    for (const tokenInfo of tokenInfoList) {
+        const ownersResponse = await fetchOwnersForNFT(tokenInfo.token_address, tokenInfo.token_id);
+        const owners = ownersResponse.owners;
 
-        let pageKey = null;
-        let validNFTCount = 0;
-
-        do {
-            const nftsResponse = await fetchNFTsForOwner(user.uid, pageKey);
-            const NFTs = nftsResponse.ownedNfts;
-            pageKey = nftsResponse.pageKey;
-
-            for (const nft of NFTs) {
-                const token_id = nft.tokenId;
-                const token_address = nft.contract.address;
-                const item = await TokenInfo.findOne({ token_id, token_address });
-                if (item) {
-                    validNFTCount++;
+        for (const owner of owners) {
+            if (!userMap.has(owner)) {
+                const user = await User.findOne({ uid: owner });
+                if (user) {
+                    userMap.set(owner, { user, count: 0 });
                 }
             }
-        } while (pageKey);
-
-        if (validNFTCount > 0) {
-            const collector = {
-                owner_of: user.uid,
-                uid: user.uid,
-                display_name: user.display_name,
-                count: validNFTCount
-            };
-            updateTopCollectorsQueue(collector);
+            if (userMap.has(owner)) {
+                userMap.get(owner).count++;
+            }
         }
-    };
-
-    while (true) {
-        const query = lastUserId ? { _id: { $gt: lastUserId } } : {};
-        const usersBatch = await User.find(query).sort({ _id: 1 }).limit(BATCH_SIZE);
-        if (usersBatch.length === 0) break;
-
-        await async.eachLimit(usersBatch, CONCURRENCY_LIMIT, async (user) => {
-            await processUser(user);
-        });
-
-        lastUserId = usersBatch[usersBatch.length - 1]._id;
 
         // Add delay between batches
         console.log(`Batch processed. Waiting for ${BATCH_DELAY / 1000} seconds before processing the next batch...`);
         await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+    }
+
+    for (const [owner, { user, count }] of userMap) {
+        if (count > 0) {
+            const collector = {
+                owner_of: owner,
+                uid: user.uid,
+                display_name: user.display_name,
+                count: count
+            };
+            updateTopCollectorsQueue(collector);
+        }
     }
 
     const topCollectors = [];
