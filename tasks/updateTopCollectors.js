@@ -28,6 +28,11 @@ const fetchOwnersForNFT = async (contractAddress, tokenId) => {
                 throw new Error('Rate limit exceeded');
             }
 
+            if (response.status === 404) {
+                console.error(`NFT not found: Contract Address: ${contractAddress}, Token ID: ${tokenId}`);
+                return null; // Skip if NFT not found
+            }
+
             if (!response.ok) {
                 throw new Error(`Failed to fetch owners: ${response.statusText}`);
             }
@@ -67,24 +72,31 @@ const updateTopCollectors = async () => {
     const userMap = new Map();
 
     for (const tokenInfo of tokenInfoList) {
-        const ownersResponse = await fetchOwnersForNFT(tokenInfo.token_address, tokenInfo.token_id);
-        const owners = ownersResponse.owners;
+        try {
+            const ownersResponse = await fetchOwnersForNFT(tokenInfo.token_address, tokenInfo.token_id);
+            if (!ownersResponse) continue; // Skip if NFT not found
 
-        for (const owner of owners) {
-            if (!userMap.has(owner)) {
-                const user = await User.findOne({ uid: owner });
-                if (user) {
-                    userMap.set(owner, { user, count: 0 });
+            const owners = ownersResponse.owners;
+            for (const owner of owners) {
+                if (!userMap.has(owner)) {
+                    const user = await User.findOne({ uid: owner });
+                    if (user) {
+                        userMap.set(owner, { user, count: 0 });
+                    }
+                }
+                if (userMap.has(owner)) {
+                    userMap.get(owner).count++;
                 }
             }
-            if (userMap.has(owner)) {
-                userMap.get(owner).count++;
-            }
-        }
 
-        // Add delay between batches
-        console.log(`Batch processed. Waiting for ${BATCH_DELAY / 1000} seconds before processing the next batch...`);
-        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+            // Add delay between batches
+            console.log(`Batch processed. Waiting for ${BATCH_DELAY / 1000} seconds before processing the next batch...`);
+            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+
+        } catch (error) {
+            console.error(`Error processing token: Contract Address: ${tokenInfo.token_address}, Token ID: ${tokenInfo.token_id}, Error: ${error.message}`);
+            continue; // Skip the current tokenInfo and proceed with the next one
+        }
     }
 
     for (const [owner, { user, count }] of userMap) {
