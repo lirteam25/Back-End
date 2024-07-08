@@ -154,12 +154,12 @@ exports.purchasedNFTInfo = catchAsync(async (req, res, next) => {
     }
 
     const userEmail = user.artist_email;
-    await sendEmail(userEmail, "LIR MUSIC - You sold one of your tokens!",
+    await sendEmail(userEmail, "LIR MUSIC - You sold one of your tracks!",
         `<html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Your token have been sold</title>
+            <title>Your track have been sold</title>
             <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap" rel="stylesheet" >
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         
@@ -179,7 +179,7 @@ exports.purchasedNFTInfo = catchAsync(async (req, res, next) => {
         </div>
                 <div style="background-color:rgb(27,27,27); padding: 10px 30px; border: 1px solid rgb(48, 48, 48); margin: 40px 0; font-size: 18px;">
                   <p style="margin: 20px 0;">Dear ${user.display_name},</p>
-                  <p style="margin: 20px 0">Congratulations on selling your token! 
+                  <p style="margin: 20px 0">Congratulations on selling your track! 
                   <p style="margin: 20px 0">If you have any questions or need assistance, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
                   <p style="margin: 20px 0">Once again, congratulations on taking this exciting step in your music career!</p>
                   <p style="margin: 20px 0">Best regards,</p>
