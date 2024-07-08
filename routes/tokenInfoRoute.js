@@ -33,7 +33,7 @@ router.route("/")
     .get(getAllNFTsInfo)
     .post(authController.verifyTokenFirebase, authController.restricTo("artist", "admin"), createNFTInfo);
 
-router.route('/purchasedSuccedeed').post(purchasedNFTInfo);
+router.route('/purchasedSuccedeed/:token_id/:token_address').post(purchasedNFTInfo);
 
 router.route("/:id")
     .get(getSingleNFT)

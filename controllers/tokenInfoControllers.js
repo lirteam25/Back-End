@@ -139,10 +139,20 @@ exports.createNFTInfo = catchAsync(async (req, res, next) => {
 
 //Create NFT
 exports.purchasedNFTInfo = catchAsync(async (req, res, next) => {
-    const user = await User.findOne(req.user);
+    // Fetch the NFT info
+    const tokenId = req.params.token_id;
+    const tokenAddress = req.params.token_address;
+    const nft = await TokenInfo.findOne({ token_id: tokenId, token_address: tokenAddress })
+    if (!nft) {
+        return next(new AppError("No NFT found with that token ID", 404));
+    }
+
+    // Fetch the user's email using author_address from NFT info
+    const user = await User.findOne({ uid: nft.author_address[0] }); // Assuming author_address is an array
     if (!user) {
-        return next(new AppError("No User found with that email", 404))
-    };
+        return next(new AppError("No User found with that author address", 404));
+    }
+
     const userEmail = user.artist_email;
     await sendEmail(userEmail, "LIR MUSIC - You sold one of your tokens!",
         `<html lang="en">
