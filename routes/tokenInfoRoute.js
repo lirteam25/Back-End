@@ -7,7 +7,8 @@ const {
     getSongsFromFirebaseToken,
     getOwnerNFTInfo,
     getSameSongNFTInfo,
-    getCreatedSongs
+    getCreatedSongs,
+    purchasedNFTInfo
 } = require("../controllers/tokenInfoControllers");
 const authController = require("../controllers/authController");
 
@@ -31,6 +32,8 @@ router.route('/createdSong').get(getCreatedSongs);
 router.route("/")
     .get(getAllNFTsInfo)
     .post(authController.verifyTokenFirebase, authController.restricTo("artist", "admin"), createNFTInfo);
+
+router.route('/purchasedSuccedeed').post(purchasedNFTInfo);
 
 router.route("/:id")
     .get(getSingleNFT)
