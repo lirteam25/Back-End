@@ -18,6 +18,7 @@ const tokenTransactionRouter = require("./routes/tokenTransactionRoute");
 const artistFormRouter = require("./routes/artistFormRoute");
 const userListeningActivityRouter = require("./routes/userListeningActivityRoute");
 const snapshotRouter = require("./routes/snapshotRoute");
+const webhookRouter = require("./routes/webhookRoute");
 
 const globalErrorHandler = require("./controllers/errorController");
 
@@ -110,6 +111,7 @@ app.use("/api/v1/transactions", tokenTransactionRouter);
 app.use("/api/v1/artistForm", artistFormRouter);
 app.use("/api/v1/userListeningActivity", userListeningActivityRouter);
 app.use("/api/v1/report", snapshotRouter);
+app.use("/api/v1/webhook", webhookRouter);
 
 //middleware for error handling. All: triggers for all the erorrs. 
 //If it is a user or nft request it will go in the user or nft route. Otherwise it will go in this.

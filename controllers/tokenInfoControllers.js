@@ -137,6 +137,141 @@ exports.createNFTInfo = catchAsync(async (req, res, next) => {
     })
 });
 
+//Create NFT
+exports.purchasedNFTInfo = catchAsync(async (req, res, next) => {
+    // Fetch the NFT info
+    const tokenId = req.params.token_id;
+    const tokenAddress = req.params.token_address;
+    const nft = await TokenInfo.findOne({ token_id: tokenId, token_address: tokenAddress })
+    if (!nft) {
+        return next(new AppError("No NFT found with that token ID", 404));
+    }
+
+    // Fetch the user's email using author_address from NFT info
+    const user = await User.findOne({ uid: nft.author_address[0] }); // Assuming author_address is an array
+    if (!user) {
+        return next(new AppError("No User found with that author address", 404));
+    }
+
+    const userEmail = user.artist_email;
+    await sendEmail(userEmail, "LIR MUSIC - You sold one of your tracks!",
+        `<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your track has been sold</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        .fab:hover {
+            color: rgb(214, 11, 82);
+        }
+        body, h1, p, a {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: rgb(17, 17, 17);
+            color: white;
+        }
+        .container {
+            padding: 50px 10%;
+            overflow: auto;
+        }
+        .header {
+            margin: 50px 0;
+            text-align: center;
+        }
+        .header h1 {
+            color: rgb(214, 11, 82);
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .message {
+            background-color: rgb(27, 27, 27);
+            padding: 10px 30px;
+            border: 1px solid rgb(48, 48, 48);
+            margin: 40px 0;
+            font-size: 18px;
+        }
+        .footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: top;
+            margin-bottom: 40px;
+            gap: 10px;
+        }
+        .footer svg {
+            width: 80px;
+            display: block;
+            margin: auto;
+        }
+        .footer .contact-info {
+            font-size: 16px;
+            text-align: center;
+        }
+        .footer .social-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        .social-links a {
+            color: white;
+            text-decoration: none;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 5%;
+            }
+            .footer {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .footer .contact-info {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Congratulations</h1>
+            <div>Your track has been sold</div>
+        </div>
+        <div class="message">
+            <p>Dear ${user.display_name},</p>
+            <p>Congratulations on selling your track!</p>
+            <p>If you have any questions or need assistance, please don't hesitate to reach out to our dedicated support team at <a href="mailto:info@lirmusic.com" style="color:rgb(214, 11, 82); text-decoration: none">info@lirmusic.com</a>.</p>
+            <p>Once again, congratulations on taking this exciting step in your music career!</p>
+            <p>Best regards,</p>
+            <p>The LIR Music Team</p>
+        </div>
+        <div class="footer">
+            <svg id="Livello_1" data-name="Livello 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850.39 340.16"><defs><style>.cls-1{fill:#fff;}</style></defs><path class="cls-1" d="M237.27-74.54V95.54H208.92V-74.54ZM38.85,67.19V-74.54H10.5V95.54H180.58V67.19Zm315-56.69,49.09,85H435.7l-49.1-85Zm-88.25-85v28.35H407.35V10.5H435.7v-85Zm-422,0,49.1,85-49.1,85h32.73l49.1-85-49.1-85Zm-258.33-85v85h28.35v-56.69h283.46v56.69h28.35v-85Zm49.1,85-49.1,85,49.1,85h32.73L-382,10.5l49.09-85Zm262.71,226.77H-386.35V95.54H-414.7v85H-74.54v-85h-28.35Z" transform="translate(414.7 159.58)"/></svg>
+            <div class="contact-info">
+                ©2023 LIR, all rights reserved <br/>
+                <a href="https://www.lirmusic.com" style="color: white; text-decoration: none">lirmusic.com</a>
+            </div>
+            <div class="social-links">
+                <a href="https://www.instagram.com/lirmusicofficial"><i class="fab fa-instagram" style="font-size:23px"></i></a>
+                <a href="#"><i class="fab fa-discord" style="font-size:23px"></i></a>
+                <a href="https://www.youtube.com/@lirmusicofficial"><i class="fab fa-youtube" style="font-size:23px"></i></a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+`);
+    res.status(201).json({
+        status: "success",
+        data: {
+        }
+    })
+});
+
 //Get sigle NFT. The path that we want to use is the id of the NFT. The id will be available in the params
 exports.getSingleNFT = catchAsync(async (req, res, next) => {
     const nft = await TokenInfo.findById(req.params.id);
