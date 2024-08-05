@@ -3,7 +3,7 @@ const NFTOwners = require('../models/tokenOwnerModel');
 const User = require('../models/userModel');
 const TokenInfo = require('../models/tokenInfoModel');
 const sendEmail = require("../Utils/sendEmail");
-const AppError = require('../utils/appError');
+const AppError = require("../Utils/appError");
 const catchAsync = require('../utils/catchAsync');
 
 exports.crossmintWebhook = catchAsync(async (req, res, next) => {
