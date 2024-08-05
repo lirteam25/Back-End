@@ -37,42 +37,6 @@ exports.getAllNFTsInfo = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.getSameSongNFTInfo = catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(TokenInfo.find(), req.query)
-        .filter()
-        .sort()
-        .limitFields()
-        .pagination();
-    let nfts = await features.query;
-    let result = [];
-    for (let i = 0; i < nfts.length; i++) {
-        const trova = await TokenOwner.find({ "token_id": nfts[i].token_id, "token_address": nfts[i].token_address, "sellingQuantity": { $gt: 0 } }).sort({ "price": 1 }).limit(1);
-        console.log("trova", trova);
-        const newObj = {
-            ...nfts[i].toObject(),
-            lowest_price: trova.length > 0 ? trova[0].price : "Not available",
-            owner_id: trova.length > 0 ? trova[0]._id : undefined
-        };
-
-        console.log("new object", newObj);
-
-        result.push(newObj);
-    }
-    //Send response
-    res.status(200).json({
-        status: "success",
-        result: nfts.length,
-        data: {
-            result,
-        },
-    });
-});
-
-exports.aliasTopNFTs = (req, res, next) => {
-    req.query.limit = '5';
-    req.query.sort = "-launch_price, created_at";
-    next();
-}
 
 //Create NFT
 exports.createNFTInfo = catchAsync(async (req, res, next) => {
@@ -436,7 +400,7 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
 
 
 
-exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
+/* exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
     const user = await User.findOne(req.user);
     if (!user) {
         return next(new AppError("No User found with that email", 400));
@@ -530,6 +494,79 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         result: NFTInfoOwned.length,
         data: {
             NFTInfoOwned
+        }
+    });
+}); */
+
+exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
+    const user = await User.findOne(req.user);
+    if (!user) {
+        return next(new AppError("No User found with that email", 400));
+    }
+
+    // Initialize Thirdweb client
+    const client = createThirdwebClient({
+        clientId: process.env.THIRDWEB_PROJECT_ID,
+    });
+
+    const chain = process.env.ACTIVE_CHAIN === "polygon" ? polygon : polygonAmoy;
+
+    // Query TokenOwner model to find NFTs owned by the user
+    const ownedTokens = await TokenOwner.find({ owner_of: user.uid });
+
+    // Process each owned NFT
+    const NFTInfoOwned = await Promise.all(ownedTokens.map(async (ownedToken) => {
+        const token_id = ownedToken.token_id;
+        const token_address = ownedToken.token_address;
+
+        const item = await TokenInfo.findOne({ token_id, token_address }).select("+audioCloudinary");
+        if (item) {
+            let maxClaimableSupply = 0;
+            let supplyClaimed = 0;
+            let pricePerToken = 0;
+            let sellingQuantity = 0;
+            let amount = ownedToken.amount;
+
+            const contract = getContract({ client, chain, address: token_address });
+
+            try {
+                // Use Thirdweb SDK to get active claim conditions
+                const activeClaimConditions = await getActiveClaimCondition({
+                    contract,
+                    tokenId: token_id
+                });
+
+                // Convert BigInt values to numbers and handle price conversion for USDC
+                if (activeClaimConditions) {
+                    pricePerToken = parseFloat(ethers.utils.formatUnits(activeClaimConditions.pricePerToken.toString(), 6)); // Convert smallest unit to USDC (6 decimals)
+                    if (item.author_address === user.uid) {
+                        maxClaimableSupply = Number(activeClaimConditions.maxClaimableSupply);
+                        supplyClaimed = Number(activeClaimConditions.supplyClaimed);
+                        sellingQuantity = maxClaimableSupply - supplyClaimed;
+                    }
+                }
+            } catch (error) {
+                console.error(`Error fetching active claim conditions for token ID ${token_id} at address ${token_address}:`, error);
+            }
+
+            // Create the item with pricePerToken, maxClaimableSupply, and amount
+            const modifiedItem = {
+                ...item.toObject(),
+                pricePerToken,
+                sellingQuantity,
+                amount
+            };
+
+            return modifiedItem;
+        }
+        return null;
+    }));
+
+    res.status(200).json({
+        status: "success",
+        result: NFTInfoOwned.length,
+        data: {
+            NFTInfoOwned: NFTInfoOwned.filter(item => item !== null) // Filter out any null items
         }
     });
 });
