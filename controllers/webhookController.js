@@ -4,7 +4,7 @@ const User = require('../models/userModel');
 const TokenInfo = require('../models/tokenInfoModel');
 const sendEmail = require("../Utils/sendEmail");
 const AppError = require("../Utils/appError");
-const catchAsync = require('../utils/catchAsync');
+const catchAsync = require("../Utils/catchAsync");
 
 exports.crossmintWebhook = catchAsync(async (req, res, next) => {
     if (req.method !== "POST") {
