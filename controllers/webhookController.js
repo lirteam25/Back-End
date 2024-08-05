@@ -2,7 +2,7 @@
 const NFTOwners = require('../models/tokenOwnerModel');
 const User = require('../models/userModel');
 const TokenInfo = require('../models/tokenInfoModel');
-const sendEmail = require('../utils/email');
+const sendEmail = require("../Utils/sendEmail");
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
