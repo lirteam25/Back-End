@@ -59,7 +59,7 @@ exports.crossmintWebhook = catchAsync(async (req, res, next) => {
             token_id: tokenId,
             token_address: contractAddress,
             isFirstSale: true
-        }, { $inc: { sellingQuantity: -1 } });
+        }, { $inc: { amount: -1 } });
 
         if (!seller) {
             return next(new AppError(`No seller found`, 400));
