@@ -1,5 +1,20 @@
 const mongoose = require("mongoose");
 
+const CommentSchema = new mongoose.Schema({
+    user_wallet: {
+        type: String, // or ObjectId if you're referencing a User model
+        required: [true, "Provide the user ID of the commenter"],
+    },
+    comment: {
+        type: String,
+        required: [true, "Provide the comment"],
+    },
+    date: {
+        type: Date,
+        default: Date.now,
+    }
+});
+
 const TokenInfoSchema = new mongoose.Schema({
     token_id: {
         type: String,
@@ -48,6 +63,11 @@ const TokenInfoSchema = new mongoose.Schema({
     author_address: {
         type: Array,
         required: [true, "Provide the author address"],
+    },
+
+    comments: {
+        type: [CommentSchema], // Array of comments, not required
+        default: [] // Default to an empty array if no comments
     },
 
     description: {
