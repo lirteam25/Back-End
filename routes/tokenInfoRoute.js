@@ -23,7 +23,7 @@ router.route('/ownersNFTInfo')
 
 router.route('/createdSong').get(getCreatedSongs);
 
-router.route("/addComment").post(authController.verifyTokenFirebase, addComment);
+router.route("/addComment/:id").patch(authController.verifyTokenFirebase, addComment);
 
 //Router NFTS
 router.route("/")
