@@ -276,6 +276,45 @@ exports.updateNFT = catchAsync(async (req, res, next) => {
     });
 });
 
+exports.addComment = catchAsync(async (req, res, next) => {
+    // Find the user making the comment
+    const user = await User.findOne(req.user);
+    if (!user) {
+        return next(new AppError("No User found with that email", 404));
+    }
+
+    // Create the new comment object
+    const newComment = {
+        user_wallet: user.uid, // assuming user object has a wallet property
+        user_picture: user.picture, // assuming user object has a picture property
+        user_display_name: user.display_name, // assuming user object has a display_name property
+        comment: req.body.comment, // comment text should be provided in the request body
+        date: Date.now(), // or use the default in schema
+    };
+
+    // Find the NFT by ID and push the new comment to the comments array
+    const nft = await TokenInfo.findByIdAndUpdate(
+        req.params.id,
+        { $push: { comments: newComment } },
+        {
+            new: true,
+            runValidators: true,
+        }
+    );
+
+    if (!nft) {
+        return next(new AppError("No NFT found with that ID", 404));
+    }
+
+    // Send the updated NFT as the response
+    res.status(200).json({
+        status: "success",
+        data: {
+            nft,
+        }
+    });
+});
+
 /* exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
     const NFTOwned = await TokenOwner.findById(req.params.id);
     if (!NFTOwned) {

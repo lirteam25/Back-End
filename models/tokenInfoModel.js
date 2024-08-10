@@ -5,6 +5,14 @@ const CommentSchema = new mongoose.Schema({
         type: String, // or ObjectId if you're referencing a User model
         required: [true, "Provide the user ID of the commenter"],
     },
+    user_picture: {
+        type: Number,
+        required: [true, "Provide the user picture of the commenter"]
+    },
+    user_display_name: {
+        type: String,
+        required: [true, "Provide the user display name of the commenter"]
+    },
     comment: {
         type: String,
         required: [true, "Provide the comment"],
