@@ -374,6 +374,45 @@ exports.addComment = catchAsync(async (req, res, next) => {
     });
 });
 
+exports.deleteComment = catchAsync(async (req, res, next) => {
+    // Extract the comment ID and user ID from the request
+    const commentId = req.params.id;
+    const userId = req.user._id;
+
+    // Find the NFT that contains the comment
+    const nft = await TokenInfo.findOne({ "comments._id": commentId });
+
+    if (!nft) {
+        return next(new AppError("No NFT found with that comment", 404));
+    }
+
+    // Find the comment to delete
+    const comment = nft.comments.id(commentId);
+
+    if (!comment) {
+        return next(new AppError("Comment not found", 404));
+    }
+
+    // Check if the comment belongs to the user making the request
+    if (comment.user_wallet !== req.user.uid) {
+        return next(new AppError("You do not have permission to delete this comment", 403));
+    }
+
+    // Remove the comment
+    comment.remove();
+
+    // Save the updated NFT document
+    await nft.save();
+
+    // Send the updated NFT as the response
+    res.status(200).json({
+        status: "success",
+        data: {
+            nft,
+        },
+    });
+});
+
 /* exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
     const NFTOwned = await TokenOwner.findById(req.params.id);
     if (!NFTOwned) {

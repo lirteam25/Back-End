@@ -9,6 +9,7 @@ const {
     getSameSongNFTInfo,
     getCreatedSongs,
     addComment,
+    deleteComment,
     purchasedNFTInfo
 } = require("../controllers/tokenInfoControllers");
 const authController = require("../controllers/authController");
@@ -24,6 +25,7 @@ router.route('/ownersNFTInfo')
 router.route('/createdSong').get(getCreatedSongs);
 
 router.route("/addComment/:id").patch(authController.verifyTokenFirebase, addComment);
+router.route("/deleteComment/:id").delete(authController.verifyTokenFirebase, deleteComment);
 
 //Router NFTS
 router.route("/")
