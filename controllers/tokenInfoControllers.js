@@ -536,7 +536,7 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
 
 
 
-/* exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
+exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
     const user = await User.findOne(req.user);
     if (!user) {
         return next(new AppError("No User found with that email", 400));
@@ -632,9 +632,9 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
             NFTInfoOwned
         }
     });
-}); */
+});
 
-exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
+/* exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
     const user = await User.findOne(req.user);
     if (!user) {
         return next(new AppError("No User found with that email", 400));
@@ -706,7 +706,7 @@ exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
         }
     });
 });
-
+ */
 
 
 
