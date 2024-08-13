@@ -375,9 +375,8 @@ exports.addComment = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteComment = catchAsync(async (req, res, next) => {
-    // Extract the comment ID and user ID from the request
+    // Extract the comment ID from the request parameters
     const commentId = req.params.id;
-    const userId = req.user._id;
 
     // Find the NFT that contains the comment
     const nft = await TokenInfo.findOne({ "comments._id": commentId });
@@ -394,12 +393,12 @@ exports.deleteComment = catchAsync(async (req, res, next) => {
     }
 
     // Check if the comment belongs to the user making the request
-    if (comment.user_wallet !== req.user.uid) {
+    if (comment.user_wallet !== req.user.wallet) {
         return next(new AppError("You do not have permission to delete this comment", 403));
     }
 
-    // Remove the comment
-    comment.remove();
+    // Remove the comment using pull method on the array
+    nft.comments.pull(commentId);
 
     // Save the updated NFT document
     await nft.save();
