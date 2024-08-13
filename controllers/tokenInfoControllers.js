@@ -534,8 +534,6 @@ exports.getOwnerNFTInfo = catchAsync(async (req, res, next) => {
     }
 });
 
-
-
 exports.getSongsFromFirebaseToken = catchAsync(async (req, res, next) => {
     const user = await User.findOne(req.user);
     if (!user) {
