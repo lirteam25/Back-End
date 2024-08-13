@@ -393,7 +393,7 @@ exports.deleteComment = catchAsync(async (req, res, next) => {
     }
 
     // Check if the comment belongs to the user making the request
-    if (comment.user_wallet !== req.user.wallet) {
+    if (comment.user_wallet !== req.user.uid) {
         return next(new AppError("You do not have permission to delete this comment", 403));
     }
 
