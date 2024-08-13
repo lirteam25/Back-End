@@ -20,7 +20,7 @@ exports.authToken = async function login(req, res) {
     await User.create({ uid: address, email: email });
   } else if (!existingUser.email) {
     await User.findOneAndUpdate(
-      req.params.id,
+      { uid: address },
       { email: email },
       {
         new: true,
