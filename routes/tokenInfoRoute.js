@@ -8,15 +8,13 @@ const {
     getOwnerNFTInfo,
     getSameSongNFTInfo,
     getCreatedSongs,
+    addComment,
+    deleteComment,
     purchasedNFTInfo
 } = require("../controllers/tokenInfoControllers");
 const authController = require("../controllers/authController");
 
 const router = express.Router();
-
-//Top 5 NFTs by launch_price
-/* router.route('/top-5-nfts')
-    .get(aliasTopNFTs, getAllNFTsInfo); */
 
 router.route('/ownersNFTInfo/:token_id/:token_address/:uid')
     .get(getOwnerNFTInfo);
@@ -24,9 +22,10 @@ router.route('/ownersNFTInfo/:token_id/:token_address/:uid')
 router.route('/ownersNFTInfo')
     .get(authController.verifyTokenFirebase, getSongsFromFirebaseToken)
 
-router.route('/sameSongToVersions').get(getSameSongNFTInfo);
-
 router.route('/createdSong').get(getCreatedSongs);
+
+router.route("/addComment/:id").patch(authController.verifyTokenFirebase, addComment);
+router.route("/deleteComment/:id").delete(authController.verifyTokenFirebase, deleteComment);
 
 //Router NFTS
 router.route("/")

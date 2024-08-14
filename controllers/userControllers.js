@@ -159,55 +159,6 @@ exports.fetchArtistName = catchAsync(async (req, res) => {
     }
 });
 
-/* exports.getTopCollectors = catchAsync(async (req, res) => {
-    const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
-
-    const top10Owners = await Owner.aggregate([
-        {
-            $group: {
-                _id: '$owner_of', // Group by the owner_of field
-                count: { $sum: 1 }, // Count occurrences of each owner_of
-            },
-        },
-        {
-            $match: {
-                _id: { $nin: excludedOwners } // Exclude specific owner_of values
-            }
-        },
-        {
-            $sort: { count: -1 } // Sort by count in descending order
-        },
-        {
-            $limit: 10 // Limit to the top 10 collectors
-        },
-        {
-            $lookup: {
-                from: 'users', // The name of the User collection
-                localField: '_id', // Field from the Owner collection
-                foreignField: 'uid', // Field from the User collection (changed to wallet)
-                as: 'userDetails' // Alias for the joined user details
-            }
-        },
-        {
-            $unwind: '$userDetails' // Unwind the array created by the lookup
-        },
-        {
-            $project: {
-                _id: 0, // Exclude the default _id field
-                owner_of: '$_id', // Rename _id as owner_of
-                uid: '$userDetails.uid', // Include the uid field from User
-                display_name: '$userDetails.display_name',
-                count: 1 // Include the count field
-            }
-        }
-    ]);
-
-    res.status(200).json({
-        status: "success",
-        topCollectors: top10Owners
-    });
-}) */
-
 exports.getTopCollectors = catchAsync(async (req, res) => {
     // Query the TopCollector model to get the top collectors
     const topCollectors = await TopCollector.find()
@@ -220,55 +171,6 @@ exports.getTopCollectors = catchAsync(async (req, res) => {
     });
 });
 
-/* exports.getSupporters = catchAsync(async (req, res) => {
-    const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];
-    const Seller = await Owner.findById(req.params.id);
-
-    const collectors = await Owner.aggregate([
-        {
-            $match: {
-                _id: { $nin: excludedOwners },
-                'token_id': Seller.token_id,
-                'token_address': Seller.token_address
-            }
-        },
-        {
-            $group: {
-                _id: '$owner_of',
-                count: { $sum: '$amount' }, // Use 'count' as the field name
-            },
-        },
-        {
-            $sort: { count: -1 } // Sort by count in descending order
-        },
-        {
-            $lookup: {
-                from: 'users',
-                localField: '_id',
-                foreignField: 'uid',
-                as: 'userDetails'
-            }
-        },
-        {
-            $unwind: '$userDetails'
-        },
-        {
-            $project: {
-                _id: 0,
-                owner_of: '$_id',
-                uid: '$userDetails.uid',
-                count: 1,
-                display_name: '$userDetails.display_name',
-                picture: '$userDetails.picture'
-            }
-        }
-    ]);
-
-    res.status(200).json({
-        status: "success",
-        supporters: collectors,
-    });
-}) */
 
 exports.getSupporters = catchAsync(async (req, res) => {
     const excludedOwners = ["0x63dd604e72eb0ec35312e1109c29202072ab9cab"];

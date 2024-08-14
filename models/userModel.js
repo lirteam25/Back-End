@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
         required: [true, "Wallet is required"],
     },
 
+    email: {
+        type: String,
+        required: [true, "Insert the email"]
+    },
+
     display_name: {
         type: String,
     },
