@@ -3,6 +3,17 @@ const catchAsync = require("../Utils/catchAsync");
 const APIFeatures = require("../Utils/apiFeatures");
 const { sendEmail } = require("../Utils/sendEmail");
 
+exports.saveEmail = catchAsync(async (req, res) => {
+    const artistForm = await ArtistForm.create(req.body);
+    const artistEmail = req.body.email
+    res.status(201).json({
+        status: "success",
+        data: {
+            artistForm: artistForm,
+        }
+    });
+})
+
 exports.createEmail = catchAsync(async (req, res) => {
     const artistForm = await ArtistForm.create(req.body);
     const artistEmail = req.body.email
