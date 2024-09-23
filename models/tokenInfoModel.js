@@ -102,7 +102,6 @@ const TokenInfoSchema = new mongoose.Schema({
     audioPinata: {
         type: String,
         required: [true, "Provide the audio IPFS link"],
-        select: false
     },
 
     audioPreview: {
@@ -113,7 +112,6 @@ const TokenInfoSchema = new mongoose.Schema({
     audioCloudinary: {
         type: String,
         required: [true, "Provide the audio url"],
-        select: false
     },
 
     audioDuration: {
