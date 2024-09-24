@@ -26,7 +26,7 @@ const globalErrorHandler = require("./controllers/errorController");
 const app = express();
 //app.use(express.urlencoded({ limit: '50mb' }));
 
-var whitelist = ["http://localhost:3000", "https://front-end-development-f5b8.up.railway.app", "https://lirmusic.com", "https://livex.lirmusic.com/", "https://www.lirmusic.com"]
+var whitelist = ["http://localhost:3000", "https://front-end-development-f5b8.up.railway.app", "https://lirmusic.com", "https://livex.lirmusic.com", "https://www.lirmusic.com"]
 const corsOptions = {
     origin: whitelist,
     credentials: true,
